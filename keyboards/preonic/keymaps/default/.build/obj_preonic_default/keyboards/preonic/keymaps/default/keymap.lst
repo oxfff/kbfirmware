@@ -1,0 +1,1622 @@
+   1               		.file	"keymap.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   7               		.text
+   8               	.Ltext0:
+   9               		.cfi_sections	.debug_frame
+  10               		.section	.text.persistant_default_layer_set,"ax",@progbits
+  11               	.global	persistant_default_layer_set
+  13               	persistant_default_layer_set:
+  14               	.LFB107:
+  15               		.file 1 "../../../../keyboards/preonic/keymaps/default/keymap.c"
+   1:../../../../keyboards/preonic/keymaps/default/keymap.c **** #include "preonic.h"
+   2:../../../../keyboards/preonic/keymaps/default/keymap.c **** #include "action_layer.h"
+   3:../../../../keyboards/preonic/keymaps/default/keymap.c **** #include "eeconfig.h"
+   4:../../../../keyboards/preonic/keymaps/default/keymap.c **** #ifdef AUDIO_ENABLE
+   5:../../../../keyboards/preonic/keymaps/default/keymap.c ****   #include "audio.h"
+   6:../../../../keyboards/preonic/keymaps/default/keymap.c **** #endif
+   7:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+   8:../../../../keyboards/preonic/keymaps/default/keymap.c **** // Each layer gets a name for readability, which is then used in the keymap matrix below.
+   9:../../../../keyboards/preonic/keymaps/default/keymap.c **** // The underscores don't mean anything - you can have a layer called STUFF or any other name.
+  10:../../../../keyboards/preonic/keymaps/default/keymap.c **** // Layer names don't all need to be of the same length, obviously, and you can also skip them
+  11:../../../../keyboards/preonic/keymaps/default/keymap.c **** // entirely and just use numbers.
+  12:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+  13:../../../../keyboards/preonic/keymaps/default/keymap.c **** #define _HHKB 0
+  14:../../../../keyboards/preonic/keymaps/default/keymap.c **** #define _QWERTY _HHKB 
+  15:../../../../keyboards/preonic/keymaps/default/keymap.c **** #define _COLEMAK 1
+  16:../../../../keyboards/preonic/keymaps/default/keymap.c **** #define _DVORAK 2
+  17:../../../../keyboards/preonic/keymaps/default/keymap.c **** #define _LOWER 3
+  18:../../../../keyboards/preonic/keymaps/default/keymap.c **** #define _RAISE 4
+  19:../../../../keyboards/preonic/keymaps/default/keymap.c **** #define _ADJUST 16
+  20:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+  21:../../../../keyboards/preonic/keymaps/default/keymap.c **** enum preonic_keycodes {
+  22:../../../../keyboards/preonic/keymaps/default/keymap.c ****   QWERTY = SAFE_RANGE,
+  23:../../../../keyboards/preonic/keymaps/default/keymap.c ****   COLEMAK,
+  24:../../../../keyboards/preonic/keymaps/default/keymap.c ****   DVORAK,
+  25:../../../../keyboards/preonic/keymaps/default/keymap.c ****   LOWER,
+  26:../../../../keyboards/preonic/keymaps/default/keymap.c ****   RAISE,
+  27:../../../../keyboards/preonic/keymaps/default/keymap.c ****   BACKLIT
+  28:../../../../keyboards/preonic/keymaps/default/keymap.c **** };
+  29:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+  30:../../../../keyboards/preonic/keymaps/default/keymap.c **** // Fillers to make layering more clear
+  31:../../../../keyboards/preonic/keymaps/default/keymap.c **** #define _______ KC_TRNS
+  32:../../../../keyboards/preonic/keymaps/default/keymap.c **** #define XXXXXXX KC_NO
+  33:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+  34:../../../../keyboards/preonic/keymaps/default/keymap.c **** const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+  35:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+  36:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+  37:../../../../keyboards/preonic/keymaps/default/keymap.c **** /* HHKB
+  38:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * ,-----------------------------------------------------------------------------------.
+  39:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * | ESC  |   1  |   2  |   3  |   4  |   5  |   6  |   7  |   8  |   9  |   0  |  `   |
+  40:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+  41:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * | Tab  |   Q  |   W  |   E  |   R  |   T  |   Y  |   U  |   I  |   O  |   P  | Bksp |
+  42:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+-------------+------+------+------+------+------|
+  43:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * | Ctrl |   A  |   S  |   D  |   F  |   G  |   H  |   J  |   K  |   L  |   ;  |Enter |
+  44:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------|------+------+------+------+------+------|
+  45:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * | Shift|   Z  |   X  |   C  |   V  |   B  |   N  |   M  |   ,  |   .  |   /  |   "  |
+  46:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+  47:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * | Brite| Esc  | Alt  | Win  |Lower |    Space    |Raise | Left | Down |  Up  |Right |
+  48:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * `-----------------------------------------------------------------------------------'
+  49:../../../../keyboards/preonic/keymaps/default/keymap.c ****  */
+  50:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+  51:../../../../keyboards/preonic/keymaps/default/keymap.c ****     
+  52:../../../../keyboards/preonic/keymaps/default/keymap.c **** //KC_GRV
+  53:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+  54:../../../../keyboards/preonic/keymaps/default/keymap.c **** [_HHKB] = {
+  55:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_ESC,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0, 
+  56:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P, 
+  57:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_LCTL,  KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SC
+  58:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLS
+  59:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {BACKLIT, KC_ESC, KC_LALT, KC_LGUI, LOWER,   KC_SPC,  KC_SPC,  RAISE,   KC_LEFT, KC_DOWN, KC_UP, 
+  60:../../../../keyboards/preonic/keymaps/default/keymap.c **** },
+  61:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+  62:../../../../keyboards/preonic/keymaps/default/keymap.c **** /* Lower
+  63:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * ,-----------------------------------------------------------------------------------.
+  64:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * | ESC  |   !  |   @  |   #  |   $  |   %  |   ^  |   &  |   *  |   (  |   )  |  ~   |
+  65:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+-------------+------+------+------+------+------|
+  66:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * | ESC  |   !  |   @  |   #  |   $  |   %  |   ^  |   &  |   *  |   [  |   ]  | Del  |
+  67:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+-------------+------+------+------+------+------|
+  68:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * | Del  |  F1  |  F2  |  F3  |  F4  |  F5  |  F6  |   _  |   +  |   {  |   }  |  |   |
+  69:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------|------+------+------+------+------+------|
+  70:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |      |  F7  |  F8  |  F9  |  F10 |  F11 |  F12 |ISO ~ |ISO | |      |      |      |
+  71:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+  72:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |      |      |      |      |      |             |      | home |P_down| p_up | end  |
+  73:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * `-----------------------------------------------------------------------------------'
+  74:../../../../keyboards/preonic/keymaps/default/keymap.c ****  */
+  75:../../../../keyboards/preonic/keymaps/default/keymap.c **** [_LOWER] = {
+  76:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_TILD, KC_EXLM, KC_AT,   KC_HASH, KC_DLR,  KC_PERC, KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, KC_RPR
+  77:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_TILD, KC_EXLM, KC_AT,   KC_HASH, KC_DLR,  KC_PERC, KC_CIRC, KC_AMPR, KC_ASTR, KC_LBRC, KC_RBR
+  78:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_DEL,  KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_UNDS, KC_PLUS, KC_LCBR, KC_RCB
+  79:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {_______, KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,  KC_F12,S(KC_NUHS),S(KC_NUBS),_______, ____
+  80:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {_______, _______, _______, _______, _______, _______, _______, _______, KC_HOME, KC_PGDN, KC_PGU
+  81:../../../../keyboards/preonic/keymaps/default/keymap.c **** },
+  82:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+  83:../../../../keyboards/preonic/keymaps/default/keymap.c **** /* Raise
+  84:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * ,-----------------------------------------------------------------------------------.
+  85:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |   `  |   1  |   2  |   3  |   4  |   5  |   6  |   7  |   8  |   9  |   0  |PSreen|
+  86:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+  87:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |   `  |   1  |   2  |   3  |   4  |   5  |   6  |   7  |M_BTN1| M-U  |M_BTN2|M_ACL0|
+  88:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+-------------+------+------+------+------+------|
+  89:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * | Del  |  F1  |  F2  |  F3  |  F4  |  F5  |  F6  |   -  | M-L  | M-D  | M-R  |M_ACL1|
+  90:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------|------+------+------+------+------+------|
+  91:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |      |  F7  |  F8  |  F9  |  F10 |  F11 |  F12 |ISO # |ISO / |  =   |      |M_ACL2|
+  92:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+  93:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |      |      |      |      |      |             |      | Next | Vol- | Vol+ | Play |
+  94:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * `-----------------------------------------------------------------------------------'
+  95:../../../../keyboards/preonic/keymaps/default/keymap.c ****  */
+  96:../../../../keyboards/preonic/keymaps/default/keymap.c **** [_RAISE] = {
+  97:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0, 
+  98:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_MS_BTN1, KC_MS_U, KC_
+  99:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_DEL,  KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_MINS, KC_MS_L, KC_MS_D, KC_MS_
+ 100:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {_______, KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,  KC_F12,  KC_NUHS, KC_NUBS, KC_EQL,  ______
+ 101:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {_______, _______, _______, _______, _______, _______, _______, _______, KC_MNXT, KC_VOLD, KC_VOL
+ 102:../../../../keyboards/preonic/keymaps/default/keymap.c **** },
+ 103:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 104:../../../../keyboards/preonic/keymaps/default/keymap.c **** /* Colemak
+ 105:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * ,-----------------------------------------------------------------------------------.
+ 106:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |   `  |   1  |   2  |   3  |   4  |   5  |   6  |   7  |   8  |   9  |   0  | Bksp |
+ 107:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+ 108:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * | Tab  |   Q  |   W  |   F  |   P  |   G  |   J  |   L  |   U  |   Y  |   ;  | Del  |
+ 109:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+-------------+------+------+------+------+------|
+ 110:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * | Esc  |   A  |   R  |   S  |   T  |   D  |   H  |   N  |   E  |   I  |   O  |  "   |
+ 111:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------|------+------+------+------+------+------|
+ 112:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * | Shift|   Z  |   X  |   C  |   V  |   B  |   K  |   M  |   ,  |   .  |   /  |Enter |
+ 113:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+ 114:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * | Brite| Ctrl | Alt  | GUI  |Lower |    Space    |Raise | Left | Down |  Up  |Right |
+ 115:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * `-----------------------------------------------------------------------------------'
+ 116:../../../../keyboards/preonic/keymaps/default/keymap.c ****  */
+ 117:../../../../keyboards/preonic/keymaps/default/keymap.c **** [_COLEMAK] = {
+ 118:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0, 
+ 119:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_TAB,  KC_Q,    KC_W,    KC_F,    KC_P,    KC_G,    KC_J,    KC_L,    KC_U,    KC_Y,    KC_SCL
+ 120:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_ESC,  KC_A,    KC_R,    KC_S,    KC_T,    KC_D,    KC_H,    KC_N,    KC_E,    KC_I,    KC_O, 
+ 121:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_K,    KC_M,    KC_COMM, KC_DOT,  KC_SLS
+ 122:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {BACKLIT, KC_LCTL, KC_LALT, KC_LGUI, LOWER,   KC_SPC,  KC_SPC,  RAISE,   KC_LEFT, KC_DOWN, KC_UP,
+ 123:../../../../keyboards/preonic/keymaps/default/keymap.c **** },
+ 124:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 125:../../../../keyboards/preonic/keymaps/default/keymap.c **** /* Dvorak
+ 126:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * ,-----------------------------------------------------------------------------------.
+ 127:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |   `  |   1  |   2  |   3  |   4  |   5  |   6  |   7  |   8  |   9  |   0  | Bksp |
+ 128:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+ 129:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * | Tab  |   "  |   ,  |   .  |   P  |   Y  |   F  |   G  |   C  |   R  |   L  | Del  |
+ 130:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+-------------+------+------+------+------+------|
+ 131:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * | Esc  |   A  |   O  |   E  |   U  |   I  |   D  |   H  |   T  |   N  |   S  |  /   |
+ 132:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------|------+------+------+------+------+------|
+ 133:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * | Shift|   ;  |   Q  |   J  |   K  |   X  |   B  |   M  |   W  |   V  |   Z  |Enter |
+ 134:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+ 135:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * | Brite| Ctrl | Alt  | GUI  |Lower |    Space    |Raise | Left | Down |  Up  |Right |
+ 136:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * `-----------------------------------------------------------------------------------'
+ 137:../../../../keyboards/preonic/keymaps/default/keymap.c ****  */
+ 138:../../../../keyboards/preonic/keymaps/default/keymap.c **** [_DVORAK] = {
+ 139:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0, 
+ 140:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_TAB,  KC_QUOT, KC_COMM, KC_DOT,  KC_P,    KC_Y,    KC_F,    KC_G,    KC_C,    KC_R,    KC_L, 
+ 141:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_ESC,  KC_A,    KC_O,    KC_E,    KC_U,    KC_I,    KC_D,    KC_H,    KC_T,    KC_N,    KC_S, 
+ 142:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_LSFT, KC_SCLN, KC_Q,    KC_J,    KC_K,    KC_X,    KC_B,    KC_M,    KC_W,    KC_V,    KC_Z, 
+ 143:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {BACKLIT, KC_LCTL, KC_LALT, KC_LGUI, LOWER,   KC_SPC,  KC_SPC,  RAISE,   KC_LEFT, KC_DOWN, KC_UP,
+ 144:../../../../keyboards/preonic/keymaps/default/keymap.c **** },
+ 145:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 146:../../../../keyboards/preonic/keymaps/default/keymap.c **** /* Adjust (Lower + Raise)
+ 147:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * ,-----------------------------------------------------------------------------------.
+ 148:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |  F1  |  F2  |  F3  |  F4  |  F5  |  F6  |  F7  |  F8  |  F9  |  F10 |  F11 |  F12 |
+ 149:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+ 150:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |      | Reset|      |      |      |      |      |      |      |      |      |  Del |
+ 151:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+-------------+------+------+------+------+------|
+ 152:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |      |      |      |Aud on|AudOff|AGnorm|AGswap|Qwerty|Colemk|Dvorak|      |      |
+ 153:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------|------+------+------+------+------+------|
+ 154:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |      |Voice-|Voice+|Mus on|MusOff|MidiOn|MidOff|      |      |      |      |      |
+ 155:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+ 156:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |      |      |      |      |      |             |      |      |      |      |      |
+ 157:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * `-----------------------------------------------------------------------------------'
+ 158:../../../../keyboards/preonic/keymaps/default/keymap.c ****  */
+ 159:../../../../keyboards/preonic/keymaps/default/keymap.c **** [_ADJUST] = {
+ 160:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11
+ 161:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {_______, RESET,   _______, _______, _______, _______, _______, _______, _______, _______, ______
+ 162:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {_______, _______, _______, AU_ON,   AU_OFF,  AG_NORM, AG_SWAP, QWERTY,  COLEMAK, DVORAK,  ______
+ 163:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {_______, MUV_DE,  MUV_IN,  MU_ON,   MU_OFF,  MI_ON,   MI_OFF,  _______, _______, _______, ______
+ 164:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {_______, _______, _______, _______, _______, _______, _______, _______, _______, _______, ______
+ 165:../../../../keyboards/preonic/keymaps/default/keymap.c **** }
+ 166:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 167:../../../../keyboards/preonic/keymaps/default/keymap.c **** /* Qwerty: replaced with HHKB as default
+ 168:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * ,-----------------------------------------------------------------------------------.
+ 169:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |   `  |   1  |   2  |   3  |   4  |   5  |   6  |   7  |   8  |   9  |   0  | Bksp |
+ 170:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+ 171:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * | Tab  |   Q  |   W  |   E  |   R  |   T  |   Y  |   U  |   I  |   O  |   P  | Del  |
+ 172:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+-------------+------+------+------+------+------|
+ 173:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * | Esc  |   A  |   S  |   D  |   F  |   G  |   H  |   J  |   K  |   L  |   ;  |  "   |
+ 174:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------|------+------+------+------+------+------|
+ 175:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * | Shift|   Z  |   X  |   C  |   V  |   B  |   N  |   M  |   ,  |   .  |   /  |Enter |
+ 176:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+ 177:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * | Brite| Ctrl | Alt  | GUI  |Lower |    Space    |Raise | Left | Down |  Up  |Right |
+ 178:../../../../keyboards/preonic/keymaps/default/keymap.c ****  * `-----------------------------------------------------------------------------------'
+ 179:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 180:../../../../keyboards/preonic/keymaps/default/keymap.c **** [_QWERTY] = {
+ 181:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0, 
+ 182:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P, 
+ 183:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_ESC,  KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCL
+ 184:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLS
+ 185:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {BACKLIT, KC_LCTL, KC_LALT, KC_LGUI, LOWER,   KC_SPC,  KC_SPC,  RAISE,   KC_LEFT, KC_DOWN, KC_UP,
+ 186:../../../../keyboards/preonic/keymaps/default/keymap.c **** },
+ 187:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 188:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 189:../../../../keyboards/preonic/keymaps/default/keymap.c ****  */
+ 190:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 191:../../../../keyboards/preonic/keymaps/default/keymap.c **** };
+ 192:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 193:../../../../keyboards/preonic/keymaps/default/keymap.c **** #ifdef AUDIO_ENABLE
+ 194:../../../../keyboards/preonic/keymaps/default/keymap.c **** float tone_startup[][2] = {
+ 195:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {NOTE_B5, 20},
+ 196:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {NOTE_B6, 8},
+ 197:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {NOTE_DS6, 20},
+ 198:../../../../keyboards/preonic/keymaps/default/keymap.c ****   {NOTE_B6, 8}
+ 199:../../../../keyboards/preonic/keymaps/default/keymap.c **** };
+ 200:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 201:../../../../keyboards/preonic/keymaps/default/keymap.c **** float tone_qwerty[][2]     = SONG(QWERTY_SOUND);
+ 202:../../../../keyboards/preonic/keymaps/default/keymap.c **** float tone_dvorak[][2]     = SONG(DVORAK_SOUND);
+ 203:../../../../keyboards/preonic/keymaps/default/keymap.c **** float tone_colemak[][2]    = SONG(COLEMAK_SOUND);
+ 204:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 205:../../../../keyboards/preonic/keymaps/default/keymap.c **** float tone_goodbye[][2] = SONG(GOODBYE_SOUND);
+ 206:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 207:../../../../keyboards/preonic/keymaps/default/keymap.c **** float music_scale[][2]     = SONG(MUSIC_SCALE_SOUND);
+ 208:../../../../keyboards/preonic/keymaps/default/keymap.c **** #endif
+ 209:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 210:../../../../keyboards/preonic/keymaps/default/keymap.c **** void persistant_default_layer_set(uint16_t default_layer) {
+  16               		.loc 1 210 0
+  17               		.cfi_startproc
+  18               	.LVL0:
+  19 0000 CF93      		push r28
+  20               	.LCFI0:
+  21               		.cfi_def_cfa_offset 3
+  22               		.cfi_offset 28, -2
+  23 0002 DF93      		push r29
+  24               	.LCFI1:
+  25               		.cfi_def_cfa_offset 4
+  26               		.cfi_offset 29, -3
+  27               	/* prologue: function */
+  28               	/* frame size = 0 */
+  29               	/* stack size = 2 */
+  30               	.L__stack_usage = 2
+  31 0004 EC01      		movw r28,r24
+ 211:../../../../keyboards/preonic/keymaps/default/keymap.c ****   eeconfig_update_default_layer(default_layer);
+  32               		.loc 1 211 0
+  33 0006 0E94 0000 		call eeconfig_update_default_layer
+  34               	.LVL1:
+ 212:../../../../keyboards/preonic/keymaps/default/keymap.c ****   default_layer_set(default_layer);
+  35               		.loc 1 212 0
+  36 000a BE01      		movw r22,r28
+  37 000c 80E0      		ldi r24,0
+  38 000e 90E0      		ldi r25,0
+  39               	/* epilogue start */
+ 213:../../../../keyboards/preonic/keymaps/default/keymap.c **** }
+  40               		.loc 1 213 0
+  41 0010 DF91      		pop r29
+  42 0012 CF91      		pop r28
+  43               	.LVL2:
+ 212:../../../../keyboards/preonic/keymaps/default/keymap.c ****   default_layer_set(default_layer);
+  44               		.loc 1 212 0
+  45 0014 0C94 0000 		jmp default_layer_set
+  46               	.LVL3:
+  47               		.cfi_endproc
+  48               	.LFE107:
+  50               		.section	.text.process_record_user,"ax",@progbits
+  51               	.global	process_record_user
+  53               	process_record_user:
+  54               	.LFB108:
+ 214:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 215:../../../../keyboards/preonic/keymaps/default/keymap.c **** bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+  55               		.loc 1 215 0
+  56               		.cfi_startproc
+  57               	.LVL4:
+  58 0000 0F93      		push r16
+  59               	.LCFI2:
+  60               		.cfi_def_cfa_offset 3
+  61               		.cfi_offset 16, -2
+  62 0002 1F93      		push r17
+  63               	.LCFI3:
+  64               		.cfi_def_cfa_offset 4
+  65               		.cfi_offset 17, -3
+  66 0004 CF93      		push r28
+  67               	.LCFI4:
+  68               		.cfi_def_cfa_offset 5
+  69               		.cfi_offset 28, -4
+  70               	/* prologue: function */
+  71               	/* frame size = 0 */
+  72               	/* stack size = 3 */
+  73               	.L__stack_usage = 3
+  74 0006 FB01      		movw r30,r22
+ 216:../../../../keyboards/preonic/keymaps/default/keymap.c ****   switch (keycode) {
+  75               		.loc 1 216 0
+  76 0008 8F33      		cpi r24,63
+  77 000a 20E7      		ldi r18,112
+  78 000c 9207      		cpc r25,r18
+  79 000e 01F0      		breq .L4
+  80 0010 00F4      		brsh .L5
+  81 0012 8D33      		cpi r24,61
+  82 0014 20E7      		ldi r18,112
+  83 0016 9207      		cpc r25,r18
+  84 0018 01F0      		breq .L6
+  85 001a 8E33      		cpi r24,62
+  86 001c 9047      		sbci r25,112
+  87 001e 01F0      		breq .L7
+  88 0020 00C0      		rjmp .L14
+  89               	.L5:
+  90 0022 8134      		cpi r24,65
+  91 0024 20E7      		ldi r18,112
+  92 0026 9207      		cpc r25,r18
+  93 0028 01F0      		breq .L8
+  94 002a 00F0      		brlo .L9
+  95 002c 8234      		cpi r24,66
+  96 002e 9047      		sbci r25,112
+  97 0030 01F4      		brne .+2
+  98 0032 00C0      		rjmp .L10
+  99 0034 00C0      		rjmp .L14
+ 100               	.L6:
+ 217:../../../../keyboards/preonic/keymaps/default/keymap.c ****         case QWERTY:
+ 218:../../../../keyboards/preonic/keymaps/default/keymap.c ****           if (record->event.pressed) {
+ 101               		.loc 1 218 0
+ 102 0036 C281      		ldd r28,Z+2
+ 103 0038 CC23      		tst r28
+ 104 003a 01F4      		brne .+2
+ 105 003c 00C0      		rjmp .L3
+ 219:../../../../keyboards/preonic/keymaps/default/keymap.c ****             #ifdef AUDIO_ENABLE
+ 220:../../../../keyboards/preonic/keymaps/default/keymap.c ****               PLAY_NOTE_ARRAY(tone_qwerty, false, 0);
+ 106               		.loc 1 220 0
+ 107 003e 00E0      		ldi r16,0
+ 108 0040 10E0      		ldi r17,0
+ 109 0042 9801      		movw r18,r16
+ 110 0044 40E0      		ldi r20,0
+ 111 0046 64E0      		ldi r22,lo8(4)
+ 112 0048 70E0      		ldi r23,0
+ 113               	.LVL5:
+ 114 004a 80E0      		ldi r24,lo8(tone_qwerty)
+ 115 004c 90E0      		ldi r25,hi8(tone_qwerty)
+ 116               	.LVL6:
+ 117 004e 0E94 0000 		call play_notes
+ 118               	.LVL7:
+ 221:../../../../keyboards/preonic/keymaps/default/keymap.c ****             #endif
+ 222:../../../../keyboards/preonic/keymaps/default/keymap.c ****             persistant_default_layer_set(1UL<<_QWERTY);
+ 119               		.loc 1 222 0
+ 120 0052 81E0      		ldi r24,lo8(1)
+ 121 0054 90E0      		ldi r25,0
+ 122 0056 00C0      		rjmp .L25
+ 123               	.LVL8:
+ 124               	.L7:
+ 223:../../../../keyboards/preonic/keymaps/default/keymap.c ****           }
+ 224:../../../../keyboards/preonic/keymaps/default/keymap.c ****           return false;
+ 225:../../../../keyboards/preonic/keymaps/default/keymap.c ****           break;
+ 226:../../../../keyboards/preonic/keymaps/default/keymap.c ****         case COLEMAK:
+ 227:../../../../keyboards/preonic/keymaps/default/keymap.c ****           if (record->event.pressed) {
+ 125               		.loc 1 227 0
+ 126 0058 C281      		ldd r28,Z+2
+ 127 005a CC23      		tst r28
+ 128 005c 01F4      		brne .+2
+ 129 005e 00C0      		rjmp .L3
+ 228:../../../../keyboards/preonic/keymaps/default/keymap.c ****             #ifdef AUDIO_ENABLE
+ 229:../../../../keyboards/preonic/keymaps/default/keymap.c ****               PLAY_NOTE_ARRAY(tone_colemak, false, 0);
+ 130               		.loc 1 229 0
+ 131 0060 00E0      		ldi r16,0
+ 132 0062 10E0      		ldi r17,0
+ 133 0064 9801      		movw r18,r16
+ 134 0066 40E0      		ldi r20,0
+ 135 0068 66E0      		ldi r22,lo8(6)
+ 136 006a 70E0      		ldi r23,0
+ 137               	.LVL9:
+ 138 006c 80E0      		ldi r24,lo8(tone_colemak)
+ 139 006e 90E0      		ldi r25,hi8(tone_colemak)
+ 140               	.LVL10:
+ 141 0070 0E94 0000 		call play_notes
+ 142               	.LVL11:
+ 230:../../../../keyboards/preonic/keymaps/default/keymap.c ****             #endif
+ 231:../../../../keyboards/preonic/keymaps/default/keymap.c ****             persistant_default_layer_set(1UL<<_COLEMAK);
+ 143               		.loc 1 231 0
+ 144 0074 82E0      		ldi r24,lo8(2)
+ 145 0076 90E0      		ldi r25,0
+ 146               	.L25:
+ 147 0078 0E94 0000 		call persistant_default_layer_set
+ 148               	.LVL12:
+ 149 007c 00C0      		rjmp .L24
+ 150               	.LVL13:
+ 151               	.L4:
+ 232:../../../../keyboards/preonic/keymaps/default/keymap.c ****           }
+ 233:../../../../keyboards/preonic/keymaps/default/keymap.c ****           return false;
+ 234:../../../../keyboards/preonic/keymaps/default/keymap.c ****           break;
+ 235:../../../../keyboards/preonic/keymaps/default/keymap.c ****         case DVORAK:
+ 236:../../../../keyboards/preonic/keymaps/default/keymap.c ****           if (record->event.pressed) {
+ 152               		.loc 1 236 0
+ 153 007e C281      		ldd r28,Z+2
+ 154 0080 CC23      		tst r28
+ 155 0082 01F0      		breq .L3
+ 237:../../../../keyboards/preonic/keymaps/default/keymap.c ****             #ifdef AUDIO_ENABLE
+ 238:../../../../keyboards/preonic/keymaps/default/keymap.c ****               PLAY_NOTE_ARRAY(tone_dvorak, false, 0);
+ 156               		.loc 1 238 0
+ 157 0084 00E0      		ldi r16,0
+ 158 0086 10E0      		ldi r17,0
+ 159 0088 9801      		movw r18,r16
+ 160 008a 40E0      		ldi r20,0
+ 161 008c 68E0      		ldi r22,lo8(8)
+ 162 008e 70E0      		ldi r23,0
+ 163               	.LVL14:
+ 164 0090 80E0      		ldi r24,lo8(tone_dvorak)
+ 165 0092 90E0      		ldi r25,hi8(tone_dvorak)
+ 166               	.LVL15:
+ 167 0094 0E94 0000 		call play_notes
+ 168               	.LVL16:
+ 239:../../../../keyboards/preonic/keymaps/default/keymap.c ****             #endif
+ 240:../../../../keyboards/preonic/keymaps/default/keymap.c ****             persistant_default_layer_set(1UL<<_DVORAK);
+ 169               		.loc 1 240 0
+ 170 0098 84E0      		ldi r24,lo8(4)
+ 171 009a 90E0      		ldi r25,0
+ 172 009c 00C0      		rjmp .L25
+ 173               	.LVL17:
+ 174               	.L9:
+ 241:../../../../keyboards/preonic/keymaps/default/keymap.c ****           }
+ 242:../../../../keyboards/preonic/keymaps/default/keymap.c ****           return false;
+ 243:../../../../keyboards/preonic/keymaps/default/keymap.c ****           break;
+ 244:../../../../keyboards/preonic/keymaps/default/keymap.c ****         case LOWER:
+ 245:../../../../keyboards/preonic/keymaps/default/keymap.c ****           if (record->event.pressed) {
+ 175               		.loc 1 245 0
+ 176 009e C281      		ldd r28,Z+2
+ 246:../../../../keyboards/preonic/keymaps/default/keymap.c ****             layer_on(_LOWER);
+ 177               		.loc 1 246 0
+ 178 00a0 83E0      		ldi r24,lo8(3)
+ 179               	.LVL18:
+ 180 00a2 00C0      		rjmp .L28
+ 181               	.LVL19:
+ 182               	.L8:
+ 247:../../../../keyboards/preonic/keymaps/default/keymap.c ****             update_tri_layer(_LOWER, _RAISE, _ADJUST);
+ 248:../../../../keyboards/preonic/keymaps/default/keymap.c ****           } else {
+ 249:../../../../keyboards/preonic/keymaps/default/keymap.c ****             layer_off(_LOWER);
+ 250:../../../../keyboards/preonic/keymaps/default/keymap.c ****             update_tri_layer(_LOWER, _RAISE, _ADJUST);
+ 251:../../../../keyboards/preonic/keymaps/default/keymap.c ****           }
+ 252:../../../../keyboards/preonic/keymaps/default/keymap.c ****           return false;
+ 253:../../../../keyboards/preonic/keymaps/default/keymap.c ****           break;
+ 254:../../../../keyboards/preonic/keymaps/default/keymap.c ****         case RAISE:
+ 255:../../../../keyboards/preonic/keymaps/default/keymap.c ****           if (record->event.pressed) {
+ 183               		.loc 1 255 0
+ 184 00a4 C281      		ldd r28,Z+2
+ 256:../../../../keyboards/preonic/keymaps/default/keymap.c ****             layer_on(_RAISE);
+ 185               		.loc 1 256 0
+ 186 00a6 84E0      		ldi r24,lo8(4)
+ 187               	.LVL20:
+ 188               	.L28:
+ 255:../../../../keyboards/preonic/keymaps/default/keymap.c ****             layer_on(_RAISE);
+ 189               		.loc 1 255 0
+ 190 00a8 CC23      		tst r28
+ 191 00aa 01F0      		breq .L12
+ 192               		.loc 1 256 0
+ 193 00ac 0E94 0000 		call layer_on
+ 194               	.LVL21:
+ 257:../../../../keyboards/preonic/keymaps/default/keymap.c ****             update_tri_layer(_LOWER, _RAISE, _ADJUST);
+ 195               		.loc 1 257 0
+ 196 00b0 40E1      		ldi r20,lo8(16)
+ 197 00b2 64E0      		ldi r22,lo8(4)
+ 198 00b4 83E0      		ldi r24,lo8(3)
+ 199 00b6 0E94 0000 		call update_tri_layer
+ 200               	.LVL22:
+ 201 00ba 00C0      		rjmp .L24
+ 202               	.LVL23:
+ 203               	.L12:
+ 258:../../../../keyboards/preonic/keymaps/default/keymap.c ****           } else {
+ 259:../../../../keyboards/preonic/keymaps/default/keymap.c ****             layer_off(_RAISE);
+ 204               		.loc 1 259 0
+ 205 00bc 0E94 0000 		call layer_off
+ 206               	.LVL24:
+ 260:../../../../keyboards/preonic/keymaps/default/keymap.c ****             update_tri_layer(_LOWER, _RAISE, _ADJUST);
+ 207               		.loc 1 260 0
+ 208 00c0 40E1      		ldi r20,lo8(16)
+ 209 00c2 64E0      		ldi r22,lo8(4)
+ 210 00c4 83E0      		ldi r24,lo8(3)
+ 211 00c6 0E94 0000 		call update_tri_layer
+ 212               	.LVL25:
+ 213 00ca 00C0      		rjmp .L3
+ 214               	.LVL26:
+ 215               	.L10:
+ 261:../../../../keyboards/preonic/keymaps/default/keymap.c ****           }
+ 262:../../../../keyboards/preonic/keymaps/default/keymap.c ****           return false;
+ 263:../../../../keyboards/preonic/keymaps/default/keymap.c ****           break;
+ 264:../../../../keyboards/preonic/keymaps/default/keymap.c ****         case BACKLIT:
+ 265:../../../../keyboards/preonic/keymaps/default/keymap.c ****           if (record->event.pressed) {
+ 216               		.loc 1 265 0
+ 217 00cc C281      		ldd r28,Z+2
+ 266:../../../../keyboards/preonic/keymaps/default/keymap.c ****             register_code(KC_RSFT);
+ 218               		.loc 1 266 0
+ 219 00ce 85EE      		ldi r24,lo8(-27)
+ 220               	.LVL27:
+ 265:../../../../keyboards/preonic/keymaps/default/keymap.c ****             register_code(KC_RSFT);
+ 221               		.loc 1 265 0
+ 222 00d0 CC23      		tst r28
+ 223 00d2 01F0      		breq .L13
+ 224               		.loc 1 266 0
+ 225 00d4 0E94 0000 		call register_code
+ 226               	.LVL28:
+ 267:../../../../keyboards/preonic/keymaps/default/keymap.c ****             #ifdef BACKLIGHT_ENABLE
+ 268:../../../../keyboards/preonic/keymaps/default/keymap.c ****               backlight_step();
+ 227               		.loc 1 268 0
+ 228 00d8 0E94 0000 		call backlight_step
+ 229               	.LVL29:
+ 230               	.L24:
+ 269:../../../../keyboards/preonic/keymaps/default/keymap.c ****             #endif
+ 270:../../../../keyboards/preonic/keymaps/default/keymap.c ****           } else {
+ 271:../../../../keyboards/preonic/keymaps/default/keymap.c ****             unregister_code(KC_RSFT);
+ 272:../../../../keyboards/preonic/keymaps/default/keymap.c ****           }
+ 273:../../../../keyboards/preonic/keymaps/default/keymap.c ****           return false;
+ 231               		.loc 1 273 0
+ 232 00dc C0E0      		ldi r28,0
+ 233 00de 00C0      		rjmp .L3
+ 234               	.LVL30:
+ 235               	.L13:
+ 271:../../../../keyboards/preonic/keymaps/default/keymap.c ****           }
+ 236               		.loc 1 271 0
+ 237 00e0 0E94 0000 		call unregister_code
+ 238               	.LVL31:
+ 239 00e4 00C0      		rjmp .L3
+ 240               	.LVL32:
+ 241               	.L14:
+ 274:../../../../keyboards/preonic/keymaps/default/keymap.c ****           break;
+ 275:../../../../keyboards/preonic/keymaps/default/keymap.c ****       }
+ 276:../../../../keyboards/preonic/keymaps/default/keymap.c ****     return true;
+ 242               		.loc 1 276 0
+ 243 00e6 C1E0      		ldi r28,lo8(1)
+ 244               	.LVL33:
+ 245               	.L3:
+ 277:../../../../keyboards/preonic/keymaps/default/keymap.c **** };
+ 246               		.loc 1 277 0
+ 247 00e8 8C2F      		mov r24,r28
+ 248               	/* epilogue start */
+ 249 00ea CF91      		pop r28
+ 250 00ec 1F91      		pop r17
+ 251 00ee 0F91      		pop r16
+ 252 00f0 0895      		ret
+ 253               		.cfi_endproc
+ 254               	.LFE108:
+ 256               		.section	.text.startup_user,"ax",@progbits
+ 257               	.global	startup_user
+ 259               	startup_user:
+ 260               	.LFB110:
+ 278:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 279:../../../../keyboards/preonic/keymaps/default/keymap.c **** void matrix_init_user(void) {
+ 280:../../../../keyboards/preonic/keymaps/default/keymap.c ****     #ifdef AUDIO_ENABLE
+ 281:../../../../keyboards/preonic/keymaps/default/keymap.c ****         startup_user();
+ 282:../../../../keyboards/preonic/keymaps/default/keymap.c ****     #endif
+ 283:../../../../keyboards/preonic/keymaps/default/keymap.c **** }
+ 284:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 285:../../../../keyboards/preonic/keymaps/default/keymap.c **** #ifdef AUDIO_ENABLE
+ 286:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 287:../../../../keyboards/preonic/keymaps/default/keymap.c **** void startup_user()
+ 288:../../../../keyboards/preonic/keymaps/default/keymap.c **** {
+ 261               		.loc 1 288 0
+ 262               		.cfi_startproc
+ 263 0000 0F93      		push r16
+ 264               	.LCFI5:
+ 265               		.cfi_def_cfa_offset 3
+ 266               		.cfi_offset 16, -2
+ 267 0002 1F93      		push r17
+ 268               	.LCFI6:
+ 269               		.cfi_def_cfa_offset 4
+ 270               		.cfi_offset 17, -3
+ 271               	/* prologue: function */
+ 272               	/* frame size = 0 */
+ 273               	/* stack size = 2 */
+ 274               	.L__stack_usage = 2
+ 275               	.LVL34:
+ 276               	.LBB6:
+ 277               	.LBB7:
+ 278               		.file 2 "/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h"
+   1:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** /* Copyright (c) 2002, Marek Michalkiewicz
+   2:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    Copyright (c) 2004,2005,2007 Joerg Wunsch
+   3:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    Copyright (c) 2007  Florin-Viorel Petrov
+   4:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    All rights reserved.
+   5:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+   6:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    Redistribution and use in source and binary forms, with or without
+   7:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    modification, are permitted provided that the following conditions are met:
+   8:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+   9:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    * Redistributions of source code must retain the above copyright
+  10:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****      notice, this list of conditions and the following disclaimer.
+  11:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+  12:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    * Redistributions in binary form must reproduce the above copyright
+  13:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****      notice, this list of conditions and the following disclaimer in
+  14:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****      the documentation and/or other materials provided with the
+  15:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****      distribution.
+  16:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+  17:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    * Neither the name of the copyright holders nor the names of
+  18:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****      contributors may be used to endorse or promote products derived
+  19:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****      from this software without specific prior written permission.
+  20:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+  21:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  22:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  23:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  24:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****   ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  25:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****   LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  26:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****   CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  27:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****   SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  28:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  29:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  30:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  31:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****   POSSIBILITY OF SUCH DAMAGE. */
+  32:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+  33:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** /* $Id: delay.h.in 2506 2016-02-08 10:05:45Z joerg_wunsch $ */
+  34:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+  35:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** #ifndef _UTIL_DELAY_H_
+  36:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** #define _UTIL_DELAY_H_ 1
+  37:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+  38:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** #ifndef __DOXYGEN__
+  39:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** #  ifndef __HAS_DELAY_CYCLES
+  40:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** #    define __HAS_DELAY_CYCLES 1
+  41:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** #  endif
+  42:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** #endif  /* __DOXYGEN__ */
+  43:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+  44:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** #include <inttypes.h>
+  45:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** #include <util/delay_basic.h>
+  46:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** #include <math.h>
+  47:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+  48:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** /** \file */
+  49:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** /** \defgroup util_delay <util/delay.h>: Convenience functions for busy-wait delay loops
+  50:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     \code
+  51:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     #define F_CPU 1000000UL  // 1 MHz
+  52:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     //#define F_CPU 14.7456E6
+  53:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     #include <util/delay.h>
+  54:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     \endcode
+  55:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+  56:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     \note As an alternative method, it is possible to pass the
+  57:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     F_CPU macro down to the compiler from the Makefile.
+  58:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     Obviously, in that case, no \c \#define statement should be
+  59:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     used.
+  60:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+  61:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     The functions in this header file are wrappers around the basic
+  62:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     busy-wait functions from <util/delay_basic.h>.  They are meant as
+  63:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     convenience functions where actual time values can be specified
+  64:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     rather than a number of cycles to wait for.  The idea behind is
+  65:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     that compile-time constant expressions will be eliminated by
+  66:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     compiler optimization so floating-point expressions can be used
+  67:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     to calculate the number of delay cycles needed based on the CPU
+  68:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     frequency passed by the macro F_CPU.
+  69:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+  70:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     \note In order for these functions to work as intended, compiler
+  71:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     optimizations <em>must</em> be enabled, and the delay time
+  72:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     <em>must</em> be an expression that is a known constant at
+  73:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     compile-time.  If these requirements are not met, the resulting
+  74:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     delay will be much longer (and basically unpredictable), and
+  75:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     applications that otherwise do not use floating-point calculations
+  76:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     will experience severe code bloat by the floating-point library
+  77:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     routines linked into the application.
+  78:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+  79:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     The functions available allow the specification of microsecond, and
+  80:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     millisecond delays directly, using the application-supplied macro
+  81:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     F_CPU as the CPU clock frequency (in Hertz).
+  82:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+  83:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** */
+  84:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+  85:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** #if !defined(__DOXYGEN__)
+  86:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** static __inline__ void _delay_us(double __us) __attribute__((__always_inline__));
+  87:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** static __inline__ void _delay_ms(double __ms) __attribute__((__always_inline__));
+  88:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** #endif
+  89:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+  90:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** #ifndef F_CPU
+  91:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** /* prevent compiler error by supplying a default */
+  92:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** # warning "F_CPU not defined for <util/delay.h>"
+  93:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** /** \ingroup util_delay
+  94:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     \def F_CPU
+  95:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     \brief CPU frequency in Hz
+  96:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+  97:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     The macro F_CPU specifies the CPU frequency to be considered by
+  98:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     the delay macros.  This macro is normally supplied by the
+  99:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     environment (e.g. from within a project header, or the project's
+ 100:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     Makefile).  The value 1 MHz here is only provided as a "vanilla"
+ 101:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     fallback if no such user-provided definition could be found.
+ 102:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+ 103:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     In terms of the delay functions, the CPU frequency can be given as
+ 104:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     a floating-point constant (e.g. 3.6864E6 for 3.6864 MHz).
+ 105:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     However, the macros in <util/setbaud.h> require it to be an
+ 106:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****     integer value.
+ 107:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****  */
+ 108:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** # define F_CPU 1000000UL
+ 109:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** #endif
+ 110:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+ 111:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** #ifndef __OPTIMIZE__
+ 112:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** # warning "Compiler optimizations disabled; functions from <util/delay.h> won't work as designed"
+ 113:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** #endif
+ 114:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+ 115:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** #if __HAS_DELAY_CYCLES && defined(__OPTIMIZE__) && \
+ 116:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****   !defined(__DELAY_BACKWARD_COMPATIBLE__) &&	   \
+ 117:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****   __STDC_HOSTED__
+ 118:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** #  include <math.h>
+ 119:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** #endif
+ 120:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+ 121:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** /**
+ 122:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    \ingroup util_delay
+ 123:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+ 124:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    Perform a delay of \c __ms milliseconds, using _delay_loop_2().
+ 125:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+ 126:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    The macro F_CPU is supposed to be defined to a
+ 127:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    constant defining the CPU clock frequency (in Hertz).
+ 128:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+ 129:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    The maximal possible delay is 262.14 ms / F_CPU in MHz.
+ 130:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+ 131:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    When the user request delay which exceed the maximum possible one,
+ 132:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    _delay_ms() provides a decreased resolution functionality. In this
+ 133:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    mode _delay_ms() will work with a resolution of 1/10 ms, providing
+ 134:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    delays up to 6.5535 seconds (independent from CPU frequency).  The
+ 135:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    user will not be informed about decreased resolution.
+ 136:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+ 137:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    If the avr-gcc toolchain has __builtin_avr_delay_cycles()
+ 138:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    support, maximal possible delay is 4294967.295 ms/ F_CPU in MHz. For
+ 139:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    values greater than the maximal possible delay, overflows results in
+ 140:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    no delay i.e., 0ms.
+ 141:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+ 142:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    Conversion of \c __ms into clock cycles may not always result in
+ 143:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    integer.  By default, the clock cycles rounded up to next
+ 144:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    integer. This ensures that the user gets at least \c __ms
+ 145:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    microseconds of delay.
+ 146:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+ 147:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    Alternatively, by defining the macro \c __DELAY_ROUND_DOWN__, or
+ 148:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    \c __DELAY_ROUND_CLOSEST__, before including this header file, the
+ 149:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    algorithm can be made to round down, or round to closest integer,
+ 150:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    respectively.
+ 151:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+ 152:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    \note
+ 153:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+ 154:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    The implementation of _delay_ms() based on
+ 155:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    __builtin_avr_delay_cycles() is not backward compatible with older
+ 156:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    implementations.  In order to get functionality backward compatible
+ 157:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    with previous versions, the macro \c "__DELAY_BACKWARD_COMPATIBLE__"
+ 158:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    must be defined before including this header file. Also, the
+ 159:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    backward compatible algorithm will be chosen if the code is
+ 160:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    compiled in a <em>freestanding environment</em> (GCC option
+ 161:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    \c -ffreestanding), as the math functions required for rounding are
+ 162:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****    not available to the compiler then.
+ 163:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+ 164:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****  */
+ 165:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** void
+ 166:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** _delay_ms(double __ms)
+ 167:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** {
+ 168:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 	double __tmp ;
+ 169:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** #if __HAS_DELAY_CYCLES && defined(__OPTIMIZE__) && \
+ 170:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****   !defined(__DELAY_BACKWARD_COMPATIBLE__) &&	   \
+ 171:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h ****   __STDC_HOSTED__
+ 172:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 	uint32_t __ticks_dc;
+ 173:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 	extern void __builtin_avr_delay_cycles(unsigned long);
+ 174:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 	__tmp = ((F_CPU) / 1e3) * __ms;
+ 175:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+ 176:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 	#if defined(__DELAY_ROUND_DOWN__)
+ 177:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 		__ticks_dc = (uint32_t)fabs(__tmp);
+ 178:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+ 179:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 	#elif defined(__DELAY_ROUND_CLOSEST__)
+ 180:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 		__ticks_dc = (uint32_t)(fabs(__tmp)+0.5);
+ 181:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+ 182:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 	#else
+ 183:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 		//round up by default
+ 184:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
+ 185:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 	#endif
+ 186:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 
+ 187:/usr/local/Cellar/avr-gcc/4.9.3/avr/include/util/delay.h **** 	__builtin_avr_delay_cycles(__ticks_dc);
+ 279               		.loc 2 187 0
+ 280 0004 2FEF      		ldi r18,lo8(63999)
+ 281 0006 89EF      		ldi r24,hi8(63999)
+ 282 0008 90E0      		ldi r25,hlo8(63999)
+ 283 000a 2150      		1: subi r18,1
+ 284 000c 8040      		sbci r24,0
+ 285 000e 9040      		sbci r25,0
+ 286 0010 01F4      		brne 1b
+ 287 0012 00C0      		rjmp .
+ 288 0014 0000      		nop
+ 289               	.LBE7:
+ 290               	.LBE6:
+ 289:../../../../keyboards/preonic/keymaps/default/keymap.c ****     _delay_ms(20); // gets rid of tick
+ 290:../../../../keyboards/preonic/keymaps/default/keymap.c ****     PLAY_NOTE_ARRAY(tone_startup, false, 0);
+ 291               		.loc 1 290 0
+ 292 0016 00E0      		ldi r16,0
+ 293 0018 10E0      		ldi r17,0
+ 294 001a 9801      		movw r18,r16
+ 295 001c 40E0      		ldi r20,0
+ 296 001e 64E0      		ldi r22,lo8(4)
+ 297 0020 70E0      		ldi r23,0
+ 298 0022 80E0      		ldi r24,lo8(tone_startup)
+ 299 0024 90E0      		ldi r25,hi8(tone_startup)
+ 300 0026 0E94 0000 		call play_notes
+ 301               	.LVL35:
+ 302               	/* epilogue start */
+ 291:../../../../keyboards/preonic/keymaps/default/keymap.c **** }
+ 303               		.loc 1 291 0
+ 304 002a 1F91      		pop r17
+ 305 002c 0F91      		pop r16
+ 306 002e 0895      		ret
+ 307               		.cfi_endproc
+ 308               	.LFE110:
+ 310               		.section	.text.matrix_init_user,"ax",@progbits
+ 311               	.global	matrix_init_user
+ 313               	matrix_init_user:
+ 314               	.LFB109:
+ 279:../../../../keyboards/preonic/keymaps/default/keymap.c ****     #ifdef AUDIO_ENABLE
+ 315               		.loc 1 279 0
+ 316               		.cfi_startproc
+ 317               	/* prologue: function */
+ 318               	/* frame size = 0 */
+ 319               	/* stack size = 0 */
+ 320               	.L__stack_usage = 0
+ 281:../../../../keyboards/preonic/keymaps/default/keymap.c ****     #endif
+ 321               		.loc 1 281 0
+ 322 0000 0C94 0000 		jmp startup_user
+ 323               	.LVL36:
+ 324               		.cfi_endproc
+ 325               	.LFE109:
+ 327               		.section	.text.shutdown_user,"ax",@progbits
+ 328               	.global	shutdown_user
+ 330               	shutdown_user:
+ 331               	.LFB111:
+ 292:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 293:../../../../keyboards/preonic/keymaps/default/keymap.c **** void shutdown_user()
+ 294:../../../../keyboards/preonic/keymaps/default/keymap.c **** {
+ 332               		.loc 1 294 0
+ 333               		.cfi_startproc
+ 334 0000 0F93      		push r16
+ 335               	.LCFI7:
+ 336               		.cfi_def_cfa_offset 3
+ 337               		.cfi_offset 16, -2
+ 338 0002 1F93      		push r17
+ 339               	.LCFI8:
+ 340               		.cfi_def_cfa_offset 4
+ 341               		.cfi_offset 17, -3
+ 342               	/* prologue: function */
+ 343               	/* frame size = 0 */
+ 344               	/* stack size = 2 */
+ 345               	.L__stack_usage = 2
+ 295:../../../../keyboards/preonic/keymaps/default/keymap.c ****     PLAY_NOTE_ARRAY(tone_goodbye, false, 0);
+ 346               		.loc 1 295 0
+ 347 0004 00E0      		ldi r16,0
+ 348 0006 10E0      		ldi r17,0
+ 349 0008 9801      		movw r18,r16
+ 350 000a 40E0      		ldi r20,0
+ 351 000c 63E0      		ldi r22,lo8(3)
+ 352 000e 70E0      		ldi r23,0
+ 353 0010 80E0      		ldi r24,lo8(tone_goodbye)
+ 354 0012 90E0      		ldi r25,hi8(tone_goodbye)
+ 355 0014 0E94 0000 		call play_notes
+ 356               	.LVL37:
+ 357               	.LBB8:
+ 358               	.LBB9:
+ 359               		.loc 2 187 0
+ 360 0018 2FEF      		ldi r18,lo8(479999)
+ 361 001a 82E5      		ldi r24,hi8(479999)
+ 362 001c 97E0      		ldi r25,hlo8(479999)
+ 363 001e 2150      		1: subi r18,1
+ 364 0020 8040      		sbci r24,0
+ 365 0022 9040      		sbci r25,0
+ 366 0024 01F4      		brne 1b
+ 367 0026 00C0      		rjmp .
+ 368 0028 0000      		nop
+ 369               	/* epilogue start */
+ 370               	.LBE9:
+ 371               	.LBE8:
+ 296:../../../../keyboards/preonic/keymaps/default/keymap.c ****     _delay_ms(150);
+ 297:../../../../keyboards/preonic/keymaps/default/keymap.c ****     stop_all_notes();
+ 298:../../../../keyboards/preonic/keymaps/default/keymap.c **** }
+ 372               		.loc 1 298 0
+ 373 002a 1F91      		pop r17
+ 374 002c 0F91      		pop r16
+ 297:../../../../keyboards/preonic/keymaps/default/keymap.c **** }
+ 375               		.loc 1 297 0
+ 376 002e 0C94 0000 		jmp stop_all_notes
+ 377               	.LVL38:
+ 378               		.cfi_endproc
+ 379               	.LFE111:
+ 381               		.section	.text.music_scale_user,"ax",@progbits
+ 382               	.global	music_scale_user
+ 384               	music_scale_user:
+ 385               	.LFB113:
+ 299:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 300:../../../../keyboards/preonic/keymaps/default/keymap.c **** void music_on_user(void)
+ 301:../../../../keyboards/preonic/keymaps/default/keymap.c **** {
+ 302:../../../../keyboards/preonic/keymaps/default/keymap.c ****     music_scale_user();
+ 303:../../../../keyboards/preonic/keymaps/default/keymap.c **** }
+ 304:../../../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 305:../../../../keyboards/preonic/keymaps/default/keymap.c **** void music_scale_user(void)
+ 306:../../../../keyboards/preonic/keymaps/default/keymap.c **** {
+ 386               		.loc 1 306 0
+ 387               		.cfi_startproc
+ 388 0000 0F93      		push r16
+ 389               	.LCFI9:
+ 390               		.cfi_def_cfa_offset 3
+ 391               		.cfi_offset 16, -2
+ 392 0002 1F93      		push r17
+ 393               	.LCFI10:
+ 394               		.cfi_def_cfa_offset 4
+ 395               		.cfi_offset 17, -3
+ 396               	/* prologue: function */
+ 397               	/* frame size = 0 */
+ 398               	/* stack size = 2 */
+ 399               	.L__stack_usage = 2
+ 307:../../../../keyboards/preonic/keymaps/default/keymap.c ****     PLAY_NOTE_ARRAY(music_scale, false, 0);
+ 400               		.loc 1 307 0
+ 401 0004 00E0      		ldi r16,0
+ 402 0006 10E0      		ldi r17,0
+ 403 0008 9801      		movw r18,r16
+ 404 000a 40E0      		ldi r20,0
+ 405 000c 68E0      		ldi r22,lo8(8)
+ 406 000e 70E0      		ldi r23,0
+ 407 0010 80E0      		ldi r24,lo8(music_scale)
+ 408 0012 90E0      		ldi r25,hi8(music_scale)
+ 409 0014 0E94 0000 		call play_notes
+ 410               	.LVL39:
+ 411               	/* epilogue start */
+ 308:../../../../keyboards/preonic/keymaps/default/keymap.c **** }
+ 412               		.loc 1 308 0
+ 413 0018 1F91      		pop r17
+ 414 001a 0F91      		pop r16
+ 415 001c 0895      		ret
+ 416               		.cfi_endproc
+ 417               	.LFE113:
+ 419               		.section	.text.music_on_user,"ax",@progbits
+ 420               	.global	music_on_user
+ 422               	music_on_user:
+ 423               	.LFB112:
+ 301:../../../../keyboards/preonic/keymaps/default/keymap.c ****     music_scale_user();
+ 424               		.loc 1 301 0
+ 425               		.cfi_startproc
+ 426               	/* prologue: function */
+ 427               	/* frame size = 0 */
+ 428               	/* stack size = 0 */
+ 429               	.L__stack_usage = 0
+ 302:../../../../keyboards/preonic/keymaps/default/keymap.c **** }
+ 430               		.loc 1 302 0
+ 431 0000 0C94 0000 		jmp music_scale_user
+ 432               	.LVL40:
+ 433               		.cfi_endproc
+ 434               	.LFE112:
+ 436               	.global	music_scale
+ 437               		.section	.data.music_scale,"aw",@progbits
+ 440               	music_scale:
+ 441 0000 00        		.byte	0
+ 442 0001 00        		.byte	0
+ 443 0002 5C        		.byte	92
+ 444 0003 44        		.byte	68
+ 445 0004 00        		.byte	0
+ 446 0005 00        		.byte	0
+ 447 0006 00        		.byte	0
+ 448 0007 41        		.byte	65
+ 449 0008 48        		.byte	72
+ 450 0009 F1        		.byte	-15
+ 451 000a 76        		.byte	118
+ 452 000b 44        		.byte	68
+ 453 000c 00        		.byte	0
+ 454 000d 00        		.byte	0
+ 455 000e 00        		.byte	0
+ 456 000f 41        		.byte	65
+ 457 0010 5C        		.byte	92
+ 458 0011 97        		.byte	-105
+ 459 0012 8A        		.byte	-118
+ 460 0013 44        		.byte	68
+ 461 0014 00        		.byte	0
+ 462 0015 00        		.byte	0
+ 463 0016 00        		.byte	0
+ 464 0017 41        		.byte	65
+ 465 0018 1F        		.byte	31
+ 466 0019 D5        		.byte	-43
+ 467 001a 92        		.byte	-110
+ 468 001b 44        		.byte	68
+ 469 001c 00        		.byte	0
+ 470 001d 00        		.byte	0
+ 471 001e 00        		.byte	0
+ 472 001f 41        		.byte	65
+ 473 0020 52        		.byte	82
+ 474 0021 D0        		.byte	-48
+ 475 0022 A4        		.byte	-92
+ 476 0023 44        		.byte	68
+ 477 0024 00        		.byte	0
+ 478 0025 00        		.byte	0
+ 479 0026 00        		.byte	0
+ 480 0027 41        		.byte	65
+ 481 0028 5C        		.byte	92
+ 482 0029 FF        		.byte	-1
+ 483 002a B8        		.byte	-72
+ 484 002b 44        		.byte	68
+ 485 002c 00        		.byte	0
+ 486 002d 00        		.byte	0
+ 487 002e 00        		.byte	0
+ 488 002f 41        		.byte	65
+ 489 0030 0A        		.byte	10
+ 490 0031 A7        		.byte	-89
+ 491 0032 CF        		.byte	-49
+ 492 0033 44        		.byte	68
+ 493 0034 00        		.byte	0
+ 494 0035 00        		.byte	0
+ 495 0036 00        		.byte	0
+ 496 0037 41        		.byte	65
+ 497 0038 00        		.byte	0
+ 498 0039 00        		.byte	0
+ 499 003a DC        		.byte	-36
+ 500 003b 44        		.byte	68
+ 501 003c 00        		.byte	0
+ 502 003d 00        		.byte	0
+ 503 003e 00        		.byte	0
+ 504 003f 41        		.byte	65
+ 505               	.global	tone_goodbye
+ 506               		.section	.data.tone_goodbye,"aw",@progbits
+ 509               	tone_goodbye:
+ 510 0000 52        		.byte	82
+ 511 0001 D0        		.byte	-48
+ 512 0002 24        		.byte	36
+ 513 0003 45        		.byte	69
+ 514 0004 00        		.byte	0
+ 515 0005 00        		.byte	0
+ 516 0006 00        		.byte	0
+ 517 0007 41        		.byte	65
+ 518 0008 00        		.byte	0
+ 519 0009 00        		.byte	0
+ 520 000a DC        		.byte	-36
+ 521 000b 44        		.byte	68
+ 522 000c 00        		.byte	0
+ 523 000d 00        		.byte	0
+ 524 000e 00        		.byte	0
+ 525 000f 41        		.byte	65
+ 526 0010 52        		.byte	82
+ 527 0011 D0        		.byte	-48
+ 528 0012 A4        		.byte	-92
+ 529 0013 44        		.byte	68
+ 530 0014 00        		.byte	0
+ 531 0015 00        		.byte	0
+ 532 0016 40        		.byte	64
+ 533 0017 41        		.byte	65
+ 534               	.global	tone_colemak
+ 535               		.section	.data.tone_colemak,"aw",@progbits
+ 538               	tone_colemak:
+ 539 0000 0A        		.byte	10
+ 540 0001 A7        		.byte	-89
+ 541 0002 CF        		.byte	-49
+ 542 0003 44        		.byte	68
+ 543 0004 00        		.byte	0
+ 544 0005 00        		.byte	0
+ 545 0006 00        		.byte	0
+ 546 0007 41        		.byte	65
+ 547 0008 00        		.byte	0
+ 548 0009 00        		.byte	0
+ 549 000a DC        		.byte	-36
+ 550 000b 44        		.byte	68
+ 551 000c 00        		.byte	0
+ 552 000d 00        		.byte	0
+ 553 000e 00        		.byte	0
+ 554 000f 41        		.byte	65
+ 555 0010 00        		.byte	0
+ 556 0011 00        		.byte	0
+ 557 0012 00        		.byte	0
+ 558 0013 00        		.byte	0
+ 559 0014 00        		.byte	0
+ 560 0015 00        		.byte	0
+ 561 0016 80        		.byte	-128
+ 562 0017 40        		.byte	64
+ 563 0018 52        		.byte	82
+ 564 0019 D0        		.byte	-48
+ 565 001a 24        		.byte	36
+ 566 001b 45        		.byte	69
+ 567 001c 00        		.byte	0
+ 568 001d 00        		.byte	0
+ 569 001e 40        		.byte	64
+ 570 001f 41        		.byte	65
+ 571 0020 00        		.byte	0
+ 572 0021 00        		.byte	0
+ 573 0022 00        		.byte	0
+ 574 0023 00        		.byte	0
+ 575 0024 00        		.byte	0
+ 576 0025 00        		.byte	0
+ 577 0026 80        		.byte	-128
+ 578 0027 40        		.byte	64
+ 579 0028 0A        		.byte	10
+ 580 0029 A7        		.byte	-89
+ 581 002a 4F        		.byte	79
+ 582 002b 45        		.byte	69
+ 583 002c 00        		.byte	0
+ 584 002d 00        		.byte	0
+ 585 002e 40        		.byte	64
+ 586 002f 41        		.byte	65
+ 587               	.global	tone_dvorak
+ 588               		.section	.data.tone_dvorak,"aw",@progbits
+ 591               	tone_dvorak:
+ 592 0000 0A        		.byte	10
+ 593 0001 A7        		.byte	-89
+ 594 0002 CF        		.byte	-49
+ 595 0003 44        		.byte	68
+ 596 0004 00        		.byte	0
+ 597 0005 00        		.byte	0
+ 598 0006 00        		.byte	0
+ 599 0007 41        		.byte	65
+ 600 0008 00        		.byte	0
+ 601 0009 00        		.byte	0
+ 602 000a DC        		.byte	-36
+ 603 000b 44        		.byte	68
+ 604 000c 00        		.byte	0
+ 605 000d 00        		.byte	0
+ 606 000e 00        		.byte	0
+ 607 000f 41        		.byte	65
+ 608 0010 00        		.byte	0
+ 609 0011 00        		.byte	0
+ 610 0012 00        		.byte	0
+ 611 0013 00        		.byte	0
+ 612 0014 00        		.byte	0
+ 613 0015 00        		.byte	0
+ 614 0016 80        		.byte	-128
+ 615 0017 40        		.byte	64
+ 616 0018 52        		.byte	82
+ 617 0019 D0        		.byte	-48
+ 618 001a 24        		.byte	36
+ 619 001b 45        		.byte	69
+ 620 001c 00        		.byte	0
+ 621 001d 00        		.byte	0
+ 622 001e 00        		.byte	0
+ 623 001f 41        		.byte	65
+ 624 0020 00        		.byte	0
+ 625 0021 00        		.byte	0
+ 626 0022 00        		.byte	0
+ 627 0023 00        		.byte	0
+ 628 0024 00        		.byte	0
+ 629 0025 00        		.byte	0
+ 630 0026 80        		.byte	-128
+ 631 0027 40        		.byte	64
+ 632 0028 5C        		.byte	92
+ 633 0029 FF        		.byte	-1
+ 634 002a 38        		.byte	56
+ 635 002b 45        		.byte	69
+ 636 002c 00        		.byte	0
+ 637 002d 00        		.byte	0
+ 638 002e 00        		.byte	0
+ 639 002f 41        		.byte	65
+ 640 0030 00        		.byte	0
+ 641 0031 00        		.byte	0
+ 642 0032 00        		.byte	0
+ 643 0033 00        		.byte	0
+ 644 0034 00        		.byte	0
+ 645 0035 00        		.byte	0
+ 646 0036 80        		.byte	-128
+ 647 0037 40        		.byte	64
+ 648 0038 52        		.byte	82
+ 649 0039 D0        		.byte	-48
+ 650 003a 24        		.byte	36
+ 651 003b 45        		.byte	69
+ 652 003c 00        		.byte	0
+ 653 003d 00        		.byte	0
+ 654 003e 00        		.byte	0
+ 655 003f 41        		.byte	65
+ 656               	.global	tone_qwerty
+ 657               		.section	.data.tone_qwerty,"aw",@progbits
+ 660               	tone_qwerty:
+ 661 0000 0A        		.byte	10
+ 662 0001 A7        		.byte	-89
+ 663 0002 CF        		.byte	-49
+ 664 0003 44        		.byte	68
+ 665 0004 00        		.byte	0
+ 666 0005 00        		.byte	0
+ 667 0006 00        		.byte	0
+ 668 0007 41        		.byte	65
+ 669 0008 00        		.byte	0
+ 670 0009 00        		.byte	0
+ 671 000a DC        		.byte	-36
+ 672 000b 44        		.byte	68
+ 673 000c 00        		.byte	0
+ 674 000d 00        		.byte	0
+ 675 000e 00        		.byte	0
+ 676 000f 41        		.byte	65
+ 677 0010 00        		.byte	0
+ 678 0011 00        		.byte	0
+ 679 0012 00        		.byte	0
+ 680 0013 00        		.byte	0
+ 681 0014 00        		.byte	0
+ 682 0015 00        		.byte	0
+ 683 0016 80        		.byte	-128
+ 684 0017 40        		.byte	64
+ 685 0018 52        		.byte	82
+ 686 0019 D0        		.byte	-48
+ 687 001a 24        		.byte	36
+ 688 001b 45        		.byte	69
+ 689 001c 00        		.byte	0
+ 690 001d 00        		.byte	0
+ 691 001e 80        		.byte	-128
+ 692 001f 41        		.byte	65
+ 693               	.global	tone_startup
+ 694               		.section	.data.tone_startup,"aw",@progbits
+ 697               	tone_startup:
+ 698 0000 48        		.byte	72
+ 699 0001 F1        		.byte	-15
+ 700 0002 76        		.byte	118
+ 701 0003 44        		.byte	68
+ 702 0004 00        		.byte	0
+ 703 0005 00        		.byte	0
+ 704 0006 A0        		.byte	-96
+ 705 0007 41        		.byte	65
+ 706 0008 F6        		.byte	-10
+ 707 0009 F0        		.byte	-16
+ 708 000a F6        		.byte	-10
+ 709 000b 44        		.byte	68
+ 710 000c 00        		.byte	0
+ 711 000d 00        		.byte	0
+ 712 000e 00        		.byte	0
+ 713 000f 41        		.byte	65
+ 714 0010 52        		.byte	82
+ 715 0011 90        		.byte	-112
+ 716 0012 9B        		.byte	-101
+ 717 0013 44        		.byte	68
+ 718 0014 00        		.byte	0
+ 719 0015 00        		.byte	0
+ 720 0016 A0        		.byte	-96
+ 721 0017 41        		.byte	65
+ 722 0018 F6        		.byte	-10
+ 723 0019 F0        		.byte	-16
+ 724 001a F6        		.byte	-10
+ 725 001b 44        		.byte	68
+ 726 001c 00        		.byte	0
+ 727 001d 00        		.byte	0
+ 728 001e 00        		.byte	0
+ 729 001f 41        		.byte	65
+ 730               	.global	keymaps
+ 731               		.section	.progmem.data.keymaps,"a",@progbits
+ 734               	keymaps:
+ 735 0000 2900      		.word	41
+ 736 0002 1E00      		.word	30
+ 737 0004 1F00      		.word	31
+ 738 0006 2000      		.word	32
+ 739 0008 2100      		.word	33
+ 740 000a 2200      		.word	34
+ 741 000c 2300      		.word	35
+ 742 000e 2400      		.word	36
+ 743 0010 2500      		.word	37
+ 744 0012 2600      		.word	38
+ 745 0014 2700      		.word	39
+ 746 0016 3500      		.word	53
+ 747 0018 2B00      		.word	43
+ 748 001a 1400      		.word	20
+ 749 001c 1A00      		.word	26
+ 750 001e 0800      		.word	8
+ 751 0020 1500      		.word	21
+ 752 0022 1700      		.word	23
+ 753 0024 1C00      		.word	28
+ 754 0026 1800      		.word	24
+ 755 0028 0C00      		.word	12
+ 756 002a 1200      		.word	18
+ 757 002c 1300      		.word	19
+ 758 002e 2A00      		.word	42
+ 759 0030 E000      		.word	224
+ 760 0032 0400      		.word	4
+ 761 0034 1600      		.word	22
+ 762 0036 0700      		.word	7
+ 763 0038 0900      		.word	9
+ 764 003a 0A00      		.word	10
+ 765 003c 0B00      		.word	11
+ 766 003e 0D00      		.word	13
+ 767 0040 0E00      		.word	14
+ 768 0042 0F00      		.word	15
+ 769 0044 3300      		.word	51
+ 770 0046 2800      		.word	40
+ 771 0048 E100      		.word	225
+ 772 004a 1D00      		.word	29
+ 773 004c 1B00      		.word	27
+ 774 004e 0600      		.word	6
+ 775 0050 1900      		.word	25
+ 776 0052 0500      		.word	5
+ 777 0054 1100      		.word	17
+ 778 0056 1000      		.word	16
+ 779 0058 3600      		.word	54
+ 780 005a 3700      		.word	55
+ 781 005c 3800      		.word	56
+ 782 005e 3400      		.word	52
+ 783 0060 4270      		.word	28738
+ 784 0062 2900      		.word	41
+ 785 0064 E200      		.word	226
+ 786 0066 E300      		.word	227
+ 787 0068 4070      		.word	28736
+ 788 006a 2C00      		.word	44
+ 789 006c 2C00      		.word	44
+ 790 006e 4170      		.word	28737
+ 791 0070 5000      		.word	80
+ 792 0072 5100      		.word	81
+ 793 0074 5200      		.word	82
+ 794 0076 4F00      		.word	79
+ 795 0078 3500      		.word	53
+ 796 007a 1E00      		.word	30
+ 797 007c 1F00      		.word	31
+ 798 007e 2000      		.word	32
+ 799 0080 2100      		.word	33
+ 800 0082 2200      		.word	34
+ 801 0084 2300      		.word	35
+ 802 0086 2400      		.word	36
+ 803 0088 2500      		.word	37
+ 804 008a 2600      		.word	38
+ 805 008c 2700      		.word	39
+ 806 008e 2A00      		.word	42
+ 807 0090 2B00      		.word	43
+ 808 0092 1400      		.word	20
+ 809 0094 1A00      		.word	26
+ 810 0096 0900      		.word	9
+ 811 0098 1300      		.word	19
+ 812 009a 0A00      		.word	10
+ 813 009c 0D00      		.word	13
+ 814 009e 0F00      		.word	15
+ 815 00a0 1800      		.word	24
+ 816 00a2 1C00      		.word	28
+ 817 00a4 3300      		.word	51
+ 818 00a6 4C00      		.word	76
+ 819 00a8 2900      		.word	41
+ 820 00aa 0400      		.word	4
+ 821 00ac 1500      		.word	21
+ 822 00ae 1600      		.word	22
+ 823 00b0 1700      		.word	23
+ 824 00b2 0700      		.word	7
+ 825 00b4 0B00      		.word	11
+ 826 00b6 1100      		.word	17
+ 827 00b8 0800      		.word	8
+ 828 00ba 0C00      		.word	12
+ 829 00bc 1200      		.word	18
+ 830 00be 3400      		.word	52
+ 831 00c0 E100      		.word	225
+ 832 00c2 1D00      		.word	29
+ 833 00c4 1B00      		.word	27
+ 834 00c6 0600      		.word	6
+ 835 00c8 1900      		.word	25
+ 836 00ca 0500      		.word	5
+ 837 00cc 0E00      		.word	14
+ 838 00ce 1000      		.word	16
+ 839 00d0 3600      		.word	54
+ 840 00d2 3700      		.word	55
+ 841 00d4 3800      		.word	56
+ 842 00d6 2800      		.word	40
+ 843 00d8 4270      		.word	28738
+ 844 00da E000      		.word	224
+ 845 00dc E200      		.word	226
+ 846 00de E300      		.word	227
+ 847 00e0 4070      		.word	28736
+ 848 00e2 2C00      		.word	44
+ 849 00e4 2C00      		.word	44
+ 850 00e6 4170      		.word	28737
+ 851 00e8 5000      		.word	80
+ 852 00ea 5100      		.word	81
+ 853 00ec 5200      		.word	82
+ 854 00ee 4F00      		.word	79
+ 855 00f0 3500      		.word	53
+ 856 00f2 1E00      		.word	30
+ 857 00f4 1F00      		.word	31
+ 858 00f6 2000      		.word	32
+ 859 00f8 2100      		.word	33
+ 860 00fa 2200      		.word	34
+ 861 00fc 2300      		.word	35
+ 862 00fe 2400      		.word	36
+ 863 0100 2500      		.word	37
+ 864 0102 2600      		.word	38
+ 865 0104 2700      		.word	39
+ 866 0106 2A00      		.word	42
+ 867 0108 2B00      		.word	43
+ 868 010a 3400      		.word	52
+ 869 010c 3600      		.word	54
+ 870 010e 3700      		.word	55
+ 871 0110 1300      		.word	19
+ 872 0112 1C00      		.word	28
+ 873 0114 0900      		.word	9
+ 874 0116 0A00      		.word	10
+ 875 0118 0600      		.word	6
+ 876 011a 1500      		.word	21
+ 877 011c 0F00      		.word	15
+ 878 011e 4C00      		.word	76
+ 879 0120 2900      		.word	41
+ 880 0122 0400      		.word	4
+ 881 0124 1200      		.word	18
+ 882 0126 0800      		.word	8
+ 883 0128 1800      		.word	24
+ 884 012a 0C00      		.word	12
+ 885 012c 0700      		.word	7
+ 886 012e 0B00      		.word	11
+ 887 0130 1700      		.word	23
+ 888 0132 1100      		.word	17
+ 889 0134 1600      		.word	22
+ 890 0136 3800      		.word	56
+ 891 0138 E100      		.word	225
+ 892 013a 3300      		.word	51
+ 893 013c 1400      		.word	20
+ 894 013e 0D00      		.word	13
+ 895 0140 0E00      		.word	14
+ 896 0142 1B00      		.word	27
+ 897 0144 0500      		.word	5
+ 898 0146 1000      		.word	16
+ 899 0148 1A00      		.word	26
+ 900 014a 1900      		.word	25
+ 901 014c 1D00      		.word	29
+ 902 014e 2800      		.word	40
+ 903 0150 4270      		.word	28738
+ 904 0152 E000      		.word	224
+ 905 0154 E200      		.word	226
+ 906 0156 E300      		.word	227
+ 907 0158 4070      		.word	28736
+ 908 015a 2C00      		.word	44
+ 909 015c 2C00      		.word	44
+ 910 015e 4170      		.word	28737
+ 911 0160 5000      		.word	80
+ 912 0162 5100      		.word	81
+ 913 0164 5200      		.word	82
+ 914 0166 4F00      		.word	79
+ 915 0168 3502      		.word	565
+ 916 016a 1E02      		.word	542
+ 917 016c 1F02      		.word	543
+ 918 016e 2002      		.word	544
+ 919 0170 2102      		.word	545
+ 920 0172 2202      		.word	546
+ 921 0174 2302      		.word	547
+ 922 0176 2402      		.word	548
+ 923 0178 2502      		.word	549
+ 924 017a 2602      		.word	550
+ 925 017c 2702      		.word	551
+ 926 017e 3502      		.word	565
+ 927 0180 3502      		.word	565
+ 928 0182 1E02      		.word	542
+ 929 0184 1F02      		.word	543
+ 930 0186 2002      		.word	544
+ 931 0188 2102      		.word	545
+ 932 018a 2202      		.word	546
+ 933 018c 2302      		.word	547
+ 934 018e 2402      		.word	548
+ 935 0190 2502      		.word	549
+ 936 0192 2F00      		.word	47
+ 937 0194 3000      		.word	48
+ 938 0196 4C00      		.word	76
+ 939 0198 4C00      		.word	76
+ 940 019a 3A00      		.word	58
+ 941 019c 3B00      		.word	59
+ 942 019e 3C00      		.word	60
+ 943 01a0 3D00      		.word	61
+ 944 01a2 3E00      		.word	62
+ 945 01a4 3F00      		.word	63
+ 946 01a6 2D02      		.word	557
+ 947 01a8 2E02      		.word	558
+ 948 01aa 2F02      		.word	559
+ 949 01ac 3002      		.word	560
+ 950 01ae 3102      		.word	561
+ 951 01b0 0100      		.word	1
+ 952 01b2 4000      		.word	64
+ 953 01b4 4100      		.word	65
+ 954 01b6 4200      		.word	66
+ 955 01b8 4300      		.word	67
+ 956 01ba 4400      		.word	68
+ 957 01bc 4500      		.word	69
+ 958 01be 3202      		.word	562
+ 959 01c0 6402      		.word	612
+ 960 01c2 0100      		.word	1
+ 961 01c4 0100      		.word	1
+ 962 01c6 0100      		.word	1
+ 963 01c8 0100      		.word	1
+ 964 01ca 0100      		.word	1
+ 965 01cc 0100      		.word	1
+ 966 01ce 0100      		.word	1
+ 967 01d0 0100      		.word	1
+ 968 01d2 0100      		.word	1
+ 969 01d4 0100      		.word	1
+ 970 01d6 0100      		.word	1
+ 971 01d8 4A00      		.word	74
+ 972 01da 4E00      		.word	78
+ 973 01dc 4B00      		.word	75
+ 974 01de 4D00      		.word	77
+ 975 01e0 3500      		.word	53
+ 976 01e2 1E00      		.word	30
+ 977 01e4 1F00      		.word	31
+ 978 01e6 2000      		.word	32
+ 979 01e8 2100      		.word	33
+ 980 01ea 2200      		.word	34
+ 981 01ec 2300      		.word	35
+ 982 01ee 2400      		.word	36
+ 983 01f0 2500      		.word	37
+ 984 01f2 2600      		.word	38
+ 985 01f4 2700      		.word	39
+ 986 01f6 4600      		.word	70
+ 987 01f8 3500      		.word	53
+ 988 01fa 1E00      		.word	30
+ 989 01fc 1F00      		.word	31
+ 990 01fe 2000      		.word	32
+ 991 0200 2100      		.word	33
+ 992 0202 2200      		.word	34
+ 993 0204 2300      		.word	35
+ 994 0206 2400      		.word	36
+ 995 0208 F400      		.word	244
+ 996 020a F000      		.word	240
+ 997 020c F500      		.word	245
+ 998 020e FD00      		.word	253
+ 999 0210 4C00      		.word	76
+ 1000 0212 3A00      		.word	58
+ 1001 0214 3B00      		.word	59
+ 1002 0216 3C00      		.word	60
+ 1003 0218 3D00      		.word	61
+ 1004 021a 3E00      		.word	62
+ 1005 021c 3F00      		.word	63
+ 1006 021e 2D00      		.word	45
+ 1007 0220 F200      		.word	242
+ 1008 0222 F100      		.word	241
+ 1009 0224 F300      		.word	243
+ 1010 0226 FE00      		.word	254
+ 1011 0228 0100      		.word	1
+ 1012 022a 4000      		.word	64
+ 1013 022c 4100      		.word	65
+ 1014 022e 4200      		.word	66
+ 1015 0230 4300      		.word	67
+ 1016 0232 4400      		.word	68
+ 1017 0234 4500      		.word	69
+ 1018 0236 3200      		.word	50
+ 1019 0238 6400      		.word	100
+ 1020 023a 2E00      		.word	46
+ 1021 023c 0100      		.word	1
+ 1022 023e FF00      		.word	255
+ 1023 0240 0100      		.word	1
+ 1024 0242 0100      		.word	1
+ 1025 0244 0100      		.word	1
+ 1026 0246 0100      		.word	1
+ 1027 0248 0100      		.word	1
+ 1028 024a 0100      		.word	1
+ 1029 024c 0100      		.word	1
+ 1030 024e 0100      		.word	1
+ 1031 0250 AB00      		.word	171
+ 1032 0252 AA00      		.word	170
+ 1033 0254 A900      		.word	169
+ 1034 0256 AE00      		.word	174
+ 1035 0258 0000 0000 		.zero	1320
+ 1035      0000 0000 
+ 1035      0000 0000 
+ 1035      0000 0000 
+ 1035      0000 0000 
+ 1036 0780 3A00      		.word	58
+ 1037 0782 3B00      		.word	59
+ 1038 0784 3C00      		.word	60
+ 1039 0786 3D00      		.word	61
+ 1040 0788 3E00      		.word	62
+ 1041 078a 3F00      		.word	63
+ 1042 078c 4000      		.word	64
+ 1043 078e 4100      		.word	65
+ 1044 0790 4200      		.word	66
+ 1045 0792 4300      		.word	67
+ 1046 0794 4400      		.word	68
+ 1047 0796 4500      		.word	69
+ 1048 0798 0100      		.word	1
+ 1049 079a 0070      		.word	28672
+ 1050 079c 0100      		.word	1
+ 1051 079e 0100      		.word	1
+ 1052 07a0 0100      		.word	1
+ 1053 07a2 0100      		.word	1
+ 1054 07a4 0100      		.word	1
+ 1055 07a6 0100      		.word	1
+ 1056 07a8 0100      		.word	1
+ 1057 07aa 0100      		.word	1
+ 1058 07ac 0100      		.word	1
+ 1059 07ae 4C00      		.word	76
+ 1060 07b0 0100      		.word	1
+ 1061 07b2 0100      		.word	1
+ 1062 07b4 0100      		.word	1
+ 1063 07b6 1570      		.word	28693
+ 1064 07b8 1670      		.word	28694
+ 1065 07ba 1370      		.word	28691
+ 1066 07bc 0A70      		.word	28682
+ 1067 07be 3D70      		.word	28733
+ 1068 07c0 3E70      		.word	28734
+ 1069 07c2 3F70      		.word	28735
+ 1070 07c4 0100      		.word	1
+ 1071 07c6 0100      		.word	1
+ 1072 07c8 0100      		.word	1
+ 1073 07ca 1C70      		.word	28700
+ 1074 07cc 1B70      		.word	28699
+ 1075 07ce 1870      		.word	28696
+ 1076 07d0 1970      		.word	28697
+ 1077 07d2 1D70      		.word	28701
+ 1078 07d4 1E70      		.word	28702
+ 1079 07d6 0100      		.word	1
+ 1080 07d8 0100      		.word	1
+ 1081 07da 0100      		.word	1
+ 1082 07dc 0100      		.word	1
+ 1083 07de 0100      		.word	1
+ 1084 07e0 0100      		.word	1
+ 1085 07e2 0100      		.word	1
+ 1086 07e4 0100      		.word	1
+ 1087 07e6 0100      		.word	1
+ 1088 07e8 0100      		.word	1
+ 1089 07ea 0100      		.word	1
+ 1090 07ec 0100      		.word	1
+ 1091 07ee 0100      		.word	1
+ 1092 07f0 0100      		.word	1
+ 1093 07f2 0100      		.word	1
+ 1094 07f4 0100      		.word	1
+ 1095 07f6 0100      		.word	1
+ 1096               		.text
+ 1097               	.Letext0:
+ 1098               		.file 3 "/usr/local/Cellar/avr-gcc/4.9.3/avr/include/stdint.h"
+ 1099               		.file 4 "../../../../tmk_core/common/keyboard.h"
+ 1100               		.file 5 "../../../../tmk_core/common/keycode.h"
+ 1101               		.file 6 "../../../../tmk_core/common/action.h"
+ 1102               		.file 7 "../../../../quantum/keymap.h"
+ 1103               		.file 8 "../../../../tmk_core/protocol/lufa/LUFA-git/LUFA/Drivers/USB/Core/USBTask.h"
+ 1104               		.file 9 "../../../../tmk_core/common/eeconfig.h"
+ 1105               		.file 10 "../../../../tmk_core/common/action_layer.h"
+ 1106               		.file 11 "../../../../quantum/audio/audio.h"
+ 1107               		.file 12 "../../../../quantum/quantum.h"
+ 1108               		.file 13 "../../../../tmk_core/common/backlight.h"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 keymap.c
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccSvqe9m.s:2      *ABS*:000000000000003e __SP_H__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccSvqe9m.s:3      *ABS*:000000000000003d __SP_L__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccSvqe9m.s:4      *ABS*:000000000000003f __SREG__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccSvqe9m.s:5      *ABS*:0000000000000000 __tmp_reg__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccSvqe9m.s:6      *ABS*:0000000000000001 __zero_reg__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccSvqe9m.s:13     .text.persistant_default_layer_set:0000000000000000 persistant_default_layer_set
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccSvqe9m.s:53     .text.process_record_user:0000000000000000 process_record_user
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccSvqe9m.s:660    .data.tone_qwerty:0000000000000000 tone_qwerty
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccSvqe9m.s:538    .data.tone_colemak:0000000000000000 tone_colemak
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccSvqe9m.s:591    .data.tone_dvorak:0000000000000000 tone_dvorak
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccSvqe9m.s:259    .text.startup_user:0000000000000000 startup_user
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccSvqe9m.s:697    .data.tone_startup:0000000000000000 tone_startup
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccSvqe9m.s:313    .text.matrix_init_user:0000000000000000 matrix_init_user
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccSvqe9m.s:330    .text.shutdown_user:0000000000000000 shutdown_user
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccSvqe9m.s:509    .data.tone_goodbye:0000000000000000 tone_goodbye
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccSvqe9m.s:384    .text.music_scale_user:0000000000000000 music_scale_user
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccSvqe9m.s:440    .data.music_scale:0000000000000000 music_scale
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccSvqe9m.s:422    .text.music_on_user:0000000000000000 music_on_user
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccSvqe9m.s:734    .progmem.data.keymaps:0000000000000000 keymaps
+
+UNDEFINED SYMBOLS
+eeconfig_update_default_layer
+default_layer_set
+play_notes
+layer_on
+update_tri_layer
+layer_off
+register_code
+backlight_step
+unregister_code
+stop_all_notes
+__do_copy_data

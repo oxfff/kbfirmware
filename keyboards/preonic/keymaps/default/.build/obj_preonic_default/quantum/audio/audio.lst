@@ -1,0 +1,2489 @@
+   1               		.file	"audio.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   7               		.text
+   8               	.Ltext0:
+   9               		.cfi_sections	.debug_frame
+  10               		.section	.text.audio_init,"ax",@progbits
+  11               	.global	audio_init
+  13               	audio_init:
+  14               	.LFB107:
+  15               		.file 1 "../../../../quantum/audio/audio.c"
+   1:../../../../quantum/audio/audio.c **** #include <stdio.h>
+   2:../../../../quantum/audio/audio.c **** #include <string.h>
+   3:../../../../quantum/audio/audio.c **** //#include <math.h>
+   4:../../../../quantum/audio/audio.c **** #include <avr/pgmspace.h>
+   5:../../../../quantum/audio/audio.c **** #include <avr/interrupt.h>
+   6:../../../../quantum/audio/audio.c **** #include <avr/io.h>
+   7:../../../../quantum/audio/audio.c **** #include "print.h"
+   8:../../../../quantum/audio/audio.c **** #include "audio.h"
+   9:../../../../quantum/audio/audio.c **** #include "keymap.h"
+  10:../../../../quantum/audio/audio.c **** 
+  11:../../../../quantum/audio/audio.c **** #include "eeconfig.h"
+  12:../../../../quantum/audio/audio.c **** 
+  13:../../../../quantum/audio/audio.c **** #define CPU_PRESCALER 8
+  14:../../../../quantum/audio/audio.c **** 
+  15:../../../../quantum/audio/audio.c **** // -----------------------------------------------------------------------------
+  16:../../../../quantum/audio/audio.c **** // Timer Abstractions
+  17:../../../../quantum/audio/audio.c **** // -----------------------------------------------------------------------------
+  18:../../../../quantum/audio/audio.c **** 
+  19:../../../../quantum/audio/audio.c **** // TIMSK3 - Timer/Counter #3 Interrupt Mask Register
+  20:../../../../quantum/audio/audio.c **** // Turn on/off 3A interputs, stopping/enabling the ISR calls
+  21:../../../../quantum/audio/audio.c **** #define ENABLE_AUDIO_COUNTER_3_ISR TIMSK3 |= _BV(OCIE3A)
+  22:../../../../quantum/audio/audio.c **** #define DISABLE_AUDIO_COUNTER_3_ISR TIMSK3 &= ~_BV(OCIE3A)
+  23:../../../../quantum/audio/audio.c **** 
+  24:../../../../quantum/audio/audio.c **** // TCCR3A: Timer/Counter #3 Control Register
+  25:../../../../quantum/audio/audio.c **** // Compare Output Mode (COM3An) = 0b00 = Normal port operation, OC3A disconnected from PC6
+  26:../../../../quantum/audio/audio.c **** #define ENABLE_AUDIO_COUNTER_3_OUTPUT TCCR3A |= _BV(COM3A1);
+  27:../../../../quantum/audio/audio.c **** #define DISABLE_AUDIO_COUNTER_3_OUTPUT TCCR3A &= ~(_BV(COM3A1) | _BV(COM3A0));
+  28:../../../../quantum/audio/audio.c **** 
+  29:../../../../quantum/audio/audio.c **** // Fast PWM Mode Controls
+  30:../../../../quantum/audio/audio.c **** #define TIMER_3_PERIOD     ICR3
+  31:../../../../quantum/audio/audio.c **** #define TIMER_3_DUTY_CYCLE OCR3A
+  32:../../../../quantum/audio/audio.c **** 
+  33:../../../../quantum/audio/audio.c **** // -----------------------------------------------------------------------------
+  34:../../../../quantum/audio/audio.c **** 
+  35:../../../../quantum/audio/audio.c **** 
+  36:../../../../quantum/audio/audio.c **** int voices = 0;
+  37:../../../../quantum/audio/audio.c **** int voice_place = 0;
+  38:../../../../quantum/audio/audio.c **** float frequency = 0;
+  39:../../../../quantum/audio/audio.c **** int volume = 0;
+  40:../../../../quantum/audio/audio.c **** long position = 0;
+  41:../../../../quantum/audio/audio.c **** 
+  42:../../../../quantum/audio/audio.c **** float frequencies[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  43:../../../../quantum/audio/audio.c **** int volumes[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  44:../../../../quantum/audio/audio.c **** bool sliding = false;
+  45:../../../../quantum/audio/audio.c **** 
+  46:../../../../quantum/audio/audio.c **** float place = 0;
+  47:../../../../quantum/audio/audio.c **** 
+  48:../../../../quantum/audio/audio.c **** uint8_t * sample;
+  49:../../../../quantum/audio/audio.c **** uint16_t sample_length = 0;
+  50:../../../../quantum/audio/audio.c **** 
+  51:../../../../quantum/audio/audio.c **** bool     playing_notes = false;
+  52:../../../../quantum/audio/audio.c **** bool     playing_note = false;
+  53:../../../../quantum/audio/audio.c **** float    note_frequency = 0;
+  54:../../../../quantum/audio/audio.c **** float    note_length = 0;
+  55:../../../../quantum/audio/audio.c **** uint8_t  note_tempo = TEMPO_DEFAULT;
+  56:../../../../quantum/audio/audio.c **** float    note_timbre = TIMBRE_DEFAULT;
+  57:../../../../quantum/audio/audio.c **** uint16_t note_position = 0;
+  58:../../../../quantum/audio/audio.c **** float (* notes_pointer)[][2];
+  59:../../../../quantum/audio/audio.c **** uint16_t notes_count;
+  60:../../../../quantum/audio/audio.c **** bool     notes_repeat;
+  61:../../../../quantum/audio/audio.c **** float    notes_rest;
+  62:../../../../quantum/audio/audio.c **** bool     note_resting = false;
+  63:../../../../quantum/audio/audio.c **** 
+  64:../../../../quantum/audio/audio.c **** uint8_t current_note = 0;
+  65:../../../../quantum/audio/audio.c **** uint8_t rest_counter = 0;
+  66:../../../../quantum/audio/audio.c **** 
+  67:../../../../quantum/audio/audio.c **** #ifdef VIBRATO_ENABLE
+  68:../../../../quantum/audio/audio.c **** float vibrato_counter = 0;
+  69:../../../../quantum/audio/audio.c **** float vibrato_strength = .5;
+  70:../../../../quantum/audio/audio.c **** float vibrato_rate = 0.125;
+  71:../../../../quantum/audio/audio.c **** #endif
+  72:../../../../quantum/audio/audio.c **** 
+  73:../../../../quantum/audio/audio.c **** float polyphony_rate = 0;
+  74:../../../../quantum/audio/audio.c **** 
+  75:../../../../quantum/audio/audio.c **** static bool audio_initialized = false;
+  76:../../../../quantum/audio/audio.c **** 
+  77:../../../../quantum/audio/audio.c **** audio_config_t audio_config;
+  78:../../../../quantum/audio/audio.c **** 
+  79:../../../../quantum/audio/audio.c **** uint16_t envelope_index = 0;
+  80:../../../../quantum/audio/audio.c **** 
+  81:../../../../quantum/audio/audio.c **** void audio_init()
+  82:../../../../quantum/audio/audio.c **** {
+  16               		.loc 1 82 0
+  17               		.cfi_startproc
+  18               	/* prologue: function */
+  19               	/* frame size = 0 */
+  20               	/* stack size = 0 */
+  21               	.L__stack_usage = 0
+  83:../../../../quantum/audio/audio.c **** 
+  84:../../../../quantum/audio/audio.c ****     // Check EEPROM
+  85:../../../../quantum/audio/audio.c ****     if (!eeconfig_is_enabled())
+  22               		.loc 1 85 0
+  23 0000 0E94 0000 		call eeconfig_is_enabled
+  24               	.LVL0:
+  25 0004 8111      		cpse r24,__zero_reg__
+  26 0006 00C0      		rjmp .L2
+  86:../../../../quantum/audio/audio.c ****     {
+  87:../../../../quantum/audio/audio.c ****         eeconfig_init();
+  27               		.loc 1 87 0
+  28 0008 0E94 0000 		call eeconfig_init
+  29               	.LVL1:
+  30               	.L2:
+  88:../../../../quantum/audio/audio.c ****     }
+  89:../../../../quantum/audio/audio.c ****     audio_config.raw = eeconfig_read_audio();
+  31               		.loc 1 89 0
+  32 000c 0E94 0000 		call eeconfig_read_audio
+  33               	.LVL2:
+  34 0010 8093 0000 		sts audio_config,r24
+  90:../../../../quantum/audio/audio.c **** 
+  91:../../../../quantum/audio/audio.c **** 	// Set port PC6 (OC3A and /OC4A) as output
+  92:../../../../quantum/audio/audio.c ****     DDRC |= _BV(PORTC6);
+  35               		.loc 1 92 0
+  36 0014 3E9A      		sbi 0x7,6
+  93:../../../../quantum/audio/audio.c **** 
+  94:../../../../quantum/audio/audio.c ****     DISABLE_AUDIO_COUNTER_3_ISR;
+  37               		.loc 1 94 0
+  38 0016 8091 7100 		lds r24,113
+  39 001a 8D7F      		andi r24,lo8(-3)
+  40 001c 8093 7100 		sts 113,r24
+  95:../../../../quantum/audio/audio.c **** 
+  96:../../../../quantum/audio/audio.c **** 	// TCCR3A / TCCR3B: Timer/Counter #3 Control Registers
+  97:../../../../quantum/audio/audio.c **** 	// Compare Output Mode (COM3An) = 0b00 = Normal port operation, OC3A disconnected from PC6
+  98:../../../../quantum/audio/audio.c **** 	// Waveform Generation Mode (WGM3n) = 0b1110 = Fast PWM Mode 14 (Period = ICR3, Duty Cycle = OCR3A
+  99:../../../../quantum/audio/audio.c **** 	// Clock Select (CS3n) = 0b010 = Clock / 8
+ 100:../../../../quantum/audio/audio.c ****     TCCR3A = (0 << COM3A1) | (0 << COM3A0) | (1 << WGM31) | (0 << WGM30);
+  41               		.loc 1 100 0
+  42 0020 82E0      		ldi r24,lo8(2)
+  43 0022 8093 9000 		sts 144,r24
+ 101:../../../../quantum/audio/audio.c ****     TCCR3B = (1 << WGM33)  | (1 << WGM32)  | (0 << CS32)  | (1 << CS31) | (0 << CS30);
+  44               		.loc 1 101 0
+  45 0026 8AE1      		ldi r24,lo8(26)
+  46 0028 8093 9100 		sts 145,r24
+ 102:../../../../quantum/audio/audio.c **** 
+ 103:../../../../quantum/audio/audio.c ****     audio_initialized = true;
+  47               		.loc 1 103 0
+  48 002c 81E0      		ldi r24,lo8(1)
+  49 002e 8093 0000 		sts audio_initialized,r24
+  50 0032 0895      		ret
+  51               		.cfi_endproc
+  52               	.LFE107:
+  54               		.section	.text.stop_all_notes,"ax",@progbits
+  55               	.global	stop_all_notes
+  57               	stop_all_notes:
+  58               	.LFB108:
+ 104:../../../../quantum/audio/audio.c **** }
+ 105:../../../../quantum/audio/audio.c **** 
+ 106:../../../../quantum/audio/audio.c **** void stop_all_notes()
+ 107:../../../../quantum/audio/audio.c **** {
+  59               		.loc 1 107 0
+  60               		.cfi_startproc
+  61               	/* prologue: function */
+  62               	/* frame size = 0 */
+  63               	/* stack size = 0 */
+  64               	.L__stack_usage = 0
+ 108:../../../../quantum/audio/audio.c ****     if (!audio_initialized) {
+  65               		.loc 1 108 0
+  66 0000 8091 0000 		lds r24,audio_initialized
+  67 0004 8111      		cpse r24,__zero_reg__
+  68 0006 00C0      		rjmp .L5
+ 109:../../../../quantum/audio/audio.c ****         audio_init();
+  69               		.loc 1 109 0
+  70 0008 0E94 0000 		call audio_init
+  71               	.LVL3:
+  72               	.L5:
+ 110:../../../../quantum/audio/audio.c ****     }
+ 111:../../../../quantum/audio/audio.c ****     voices = 0;
+  73               		.loc 1 111 0
+  74 000c 1092 0000 		sts voices+1,__zero_reg__
+  75 0010 1092 0000 		sts voices,__zero_reg__
+ 112:../../../../quantum/audio/audio.c **** 
+ 113:../../../../quantum/audio/audio.c ****     DISABLE_AUDIO_COUNTER_3_ISR;
+  76               		.loc 1 113 0
+  77 0014 8091 7100 		lds r24,113
+  78 0018 8D7F      		andi r24,lo8(-3)
+  79 001a 8093 7100 		sts 113,r24
+ 114:../../../../quantum/audio/audio.c ****     DISABLE_AUDIO_COUNTER_3_OUTPUT;
+  80               		.loc 1 114 0
+  81 001e 8091 9000 		lds r24,144
+  82 0022 8F73      		andi r24,lo8(63)
+  83 0024 8093 9000 		sts 144,r24
+ 115:../../../../quantum/audio/audio.c **** 
+ 116:../../../../quantum/audio/audio.c ****     playing_notes = false;
+  84               		.loc 1 116 0
+  85 0028 1092 0000 		sts playing_notes,__zero_reg__
+ 117:../../../../quantum/audio/audio.c ****     playing_note = false;
+  86               		.loc 1 117 0
+  87 002c 1092 0000 		sts playing_note,__zero_reg__
+ 118:../../../../quantum/audio/audio.c ****     frequency = 0;
+  88               		.loc 1 118 0
+  89 0030 1092 0000 		sts frequency,__zero_reg__
+  90 0034 1092 0000 		sts frequency+1,__zero_reg__
+  91 0038 1092 0000 		sts frequency+2,__zero_reg__
+  92 003c 1092 0000 		sts frequency+3,__zero_reg__
+ 119:../../../../quantum/audio/audio.c ****     volume = 0;
+  93               		.loc 1 119 0
+  94 0040 1092 0000 		sts volume+1,__zero_reg__
+  95 0044 1092 0000 		sts volume,__zero_reg__
+  96               	.LVL4:
+  97 0048 E0E0      		ldi r30,lo8(frequencies)
+  98 004a F0E0      		ldi r31,hi8(frequencies)
+  99 004c A0E0      		ldi r26,lo8(volumes)
+ 100 004e B0E0      		ldi r27,hi8(volumes)
+ 101               	.LVL5:
+ 102               	.L6:
+ 103               	.LBB2:
+ 120:../../../../quantum/audio/audio.c **** 
+ 121:../../../../quantum/audio/audio.c ****     for (uint8_t i = 0; i < 8; i++)
+ 122:../../../../quantum/audio/audio.c ****     {
+ 123:../../../../quantum/audio/audio.c ****         frequencies[i] = 0;
+ 104               		.loc 1 123 0 discriminator 3
+ 105 0050 1192      		st Z+,__zero_reg__
+ 106 0052 1192      		st Z+,__zero_reg__
+ 107 0054 1192      		st Z+,__zero_reg__
+ 108 0056 1192      		st Z+,__zero_reg__
+ 124:../../../../quantum/audio/audio.c ****         volumes[i] = 0;
+ 109               		.loc 1 124 0 discriminator 3
+ 110 0058 1D92      		st X+,__zero_reg__
+ 111 005a 1D92      		st X+,__zero_reg__
+ 121:../../../../quantum/audio/audio.c ****     {
+ 112               		.loc 1 121 0 discriminator 3
+ 113 005c 80E0      		ldi r24,hi8(frequencies+32)
+ 114 005e E030      		cpi r30,lo8(frequencies+32)
+ 115 0060 F807      		cpc r31,r24
+ 116 0062 01F4      		brne .L6
+ 117               	/* epilogue start */
+ 118               	.LBE2:
+ 125:../../../../quantum/audio/audio.c ****     }
+ 126:../../../../quantum/audio/audio.c **** }
+ 119               		.loc 1 126 0
+ 120 0064 0895      		ret
+ 121               		.cfi_endproc
+ 122               	.LFE108:
+ 124               	.global	__eqsf2
+ 125               		.section	.text.stop_note,"ax",@progbits
+ 126               	.global	stop_note
+ 128               	stop_note:
+ 129               	.LFB109:
+ 127:../../../../quantum/audio/audio.c **** 
+ 128:../../../../quantum/audio/audio.c **** void stop_note(float freq)
+ 129:../../../../quantum/audio/audio.c **** {
+ 130               		.loc 1 129 0
+ 131               		.cfi_startproc
+ 132               	.LVL6:
+ 133 0000 CF92      		push r12
+ 134               	.LCFI0:
+ 135               		.cfi_def_cfa_offset 3
+ 136               		.cfi_offset 12, -2
+ 137 0002 DF92      		push r13
+ 138               	.LCFI1:
+ 139               		.cfi_def_cfa_offset 4
+ 140               		.cfi_offset 13, -3
+ 141 0004 EF92      		push r14
+ 142               	.LCFI2:
+ 143               		.cfi_def_cfa_offset 5
+ 144               		.cfi_offset 14, -4
+ 145 0006 FF92      		push r15
+ 146               	.LCFI3:
+ 147               		.cfi_def_cfa_offset 6
+ 148               		.cfi_offset 15, -5
+ 149 0008 0F93      		push r16
+ 150               	.LCFI4:
+ 151               		.cfi_def_cfa_offset 7
+ 152               		.cfi_offset 16, -6
+ 153 000a 1F93      		push r17
+ 154               	.LCFI5:
+ 155               		.cfi_def_cfa_offset 8
+ 156               		.cfi_offset 17, -7
+ 157 000c CF93      		push r28
+ 158               	.LCFI6:
+ 159               		.cfi_def_cfa_offset 9
+ 160               		.cfi_offset 28, -8
+ 161 000e DF93      		push r29
+ 162               	.LCFI7:
+ 163               		.cfi_def_cfa_offset 10
+ 164               		.cfi_offset 29, -9
+ 165               	/* prologue: function */
+ 166               	/* frame size = 0 */
+ 167               	/* stack size = 8 */
+ 168               	.L__stack_usage = 8
+ 130:../../../../quantum/audio/audio.c ****     if (playing_note) {
+ 169               		.loc 1 130 0
+ 170 0010 2091 0000 		lds r18,playing_note
+ 171 0014 2223      		tst r18
+ 172 0016 01F4      		brne .+2
+ 173 0018 00C0      		rjmp .L8
+ 174 001a 6B01      		movw r12,r22
+ 175 001c 7C01      		movw r14,r24
+ 131:../../../../quantum/audio/audio.c ****         if (!audio_initialized) {
+ 176               		.loc 1 131 0
+ 177 001e 8091 0000 		lds r24,audio_initialized
+ 178 0022 8111      		cpse r24,__zero_reg__
+ 179 0024 00C0      		rjmp .L11
+ 132:../../../../quantum/audio/audio.c ****             audio_init();
+ 180               		.loc 1 132 0
+ 181 0026 0E94 0000 		call audio_init
+ 182               	.LVL7:
+ 183               	.L11:
+ 184 002a 00E0      		ldi r16,lo8(frequencies+32)
+ 185 002c 10E0      		ldi r17,hi8(frequencies+32)
+ 186               	.LBB3:
+ 133:../../../../quantum/audio/audio.c ****         }
+ 134:../../../../quantum/audio/audio.c ****         for (int i = 7; i >= 0; i--) {
+ 187               		.loc 1 134 0
+ 188 002e C7E0      		ldi r28,lo8(7)
+ 189 0030 D0E0      		ldi r29,0
+ 190               	.LVL8:
+ 191               	.L18:
+ 135:../../../../quantum/audio/audio.c ****             if (frequencies[i] == freq) {
+ 192               		.loc 1 135 0
+ 193 0032 A701      		movw r20,r14
+ 194 0034 9601      		movw r18,r12
+ 195 0036 F801      		movw r30,r16
+ 196 0038 9291      		ld r25,-Z
+ 197 003a 8291      		ld r24,-Z
+ 198 003c 7291      		ld r23,-Z
+ 199 003e 6291      		ld r22,-Z
+ 200 0040 8F01      		movw r16,r30
+ 201 0042 0E94 0000 		call __eqsf2
+ 202               	.LVL9:
+ 203 0046 8111      		cpse r24,__zero_reg__
+ 204 0048 00C0      		rjmp .L25
+ 136:../../../../quantum/audio/audio.c ****                 frequencies[i] = 0;
+ 205               		.loc 1 136 0
+ 206 004a FE01      		movw r30,r28
+ 207 004c EE0F      		lsl r30
+ 208 004e FF1F      		rol r31
+ 209 0050 EE0F      		lsl r30
+ 210 0052 FF1F      		rol r31
+ 211 0054 E050      		subi r30,lo8(-(frequencies))
+ 212 0056 F040      		sbci r31,hi8(-(frequencies))
+ 213 0058 1082      		st Z,__zero_reg__
+ 214 005a 1182      		std Z+1,__zero_reg__
+ 215 005c 1282      		std Z+2,__zero_reg__
+ 216 005e 1382      		std Z+3,__zero_reg__
+ 137:../../../../quantum/audio/audio.c ****                 volumes[i] = 0;
+ 217               		.loc 1 137 0
+ 218 0060 DE01      		movw r26,r28
+ 219 0062 AA0F      		lsl r26
+ 220 0064 BB1F      		rol r27
+ 221 0066 A050      		subi r26,lo8(-(volumes))
+ 222 0068 B040      		sbci r27,hi8(-(volumes))
+ 223 006a 1196      		adiw r26,1
+ 224 006c 1C92      		st X,__zero_reg__
+ 225 006e 1E92      		st -X,__zero_reg__
+ 226               	.LVL10:
+ 227               	.L14:
+ 228               	.LBB4:
+ 138:../../../../quantum/audio/audio.c ****                 for (int j = i; (j < 7); j++) {
+ 229               		.loc 1 138 0 discriminator 1
+ 230 0070 C730      		cpi r28,7
+ 231 0072 D105      		cpc r29,__zero_reg__
+ 232 0074 01F0      		breq .L19
+ 139:../../../../quantum/audio/audio.c ****                     frequencies[j] = frequencies[j+1];
+ 233               		.loc 1 139 0 discriminator 3
+ 234 0076 2196      		adiw r28,1
+ 235               	.LVL11:
+ 236 0078 4481      		ldd r20,Z+4
+ 237 007a 5581      		ldd r21,Z+5
+ 238 007c 6681      		ldd r22,Z+6
+ 239 007e 7781      		ldd r23,Z+7
+ 240 0080 4083      		st Z,r20
+ 241 0082 5183      		std Z+1,r21
+ 242 0084 6283      		std Z+2,r22
+ 243 0086 7383      		std Z+3,r23
+ 140:../../../../quantum/audio/audio.c ****                     frequencies[j+1] = 0;
+ 244               		.loc 1 140 0 discriminator 3
+ 245 0088 1482      		std Z+4,__zero_reg__
+ 246 008a 1582      		std Z+5,__zero_reg__
+ 247 008c 1682      		std Z+6,__zero_reg__
+ 248 008e 1782      		std Z+7,__zero_reg__
+ 141:../../../../quantum/audio/audio.c ****                     volumes[j] = volumes[j+1];
+ 249               		.loc 1 141 0 discriminator 3
+ 250 0090 1296      		adiw r26,2
+ 251 0092 8D91      		ld r24,X+
+ 252 0094 9C91      		ld r25,X
+ 253 0096 1397      		sbiw r26,2+1
+ 254 0098 1196      		adiw r26,1
+ 255 009a 9C93      		st X,r25
+ 256 009c 8E93      		st -X,r24
+ 142:../../../../quantum/audio/audio.c ****                     volumes[j+1] = 0;
+ 257               		.loc 1 142 0 discriminator 3
+ 258 009e 1396      		adiw r26,2+1
+ 259 00a0 1C92      		st X,__zero_reg__
+ 260 00a2 1E92      		st -X,__zero_reg__
+ 261 00a4 1297      		sbiw r26,2
+ 262               	.LVL12:
+ 263 00a6 3496      		adiw r30,4
+ 264 00a8 1296      		adiw r26,2
+ 265 00aa 00C0      		rjmp .L14
+ 266               	.LVL13:
+ 267               	.L25:
+ 268               	.LBE4:
+ 134:../../../../quantum/audio/audio.c ****             if (frequencies[i] == freq) {
+ 269               		.loc 1 134 0 discriminator 2
+ 270               	.LVL14:
+ 271 00ac 2197      		sbiw r28,1
+ 272 00ae 00F4      		brcc .L18
+ 273               	.L19:
+ 274               	.LBE3:
+ 143:../../../../quantum/audio/audio.c ****                 }
+ 144:../../../../quantum/audio/audio.c ****                 break;
+ 145:../../../../quantum/audio/audio.c ****             }
+ 146:../../../../quantum/audio/audio.c ****         }
+ 147:../../../../quantum/audio/audio.c ****         voices--;
+ 275               		.loc 1 147 0
+ 276 00b0 8091 0000 		lds r24,voices
+ 277 00b4 9091 0000 		lds r25,voices+1
+ 278 00b8 0197      		sbiw r24,1
+ 148:../../../../quantum/audio/audio.c ****         if (voices < 0)
+ 279               		.loc 1 148 0
+ 280 00ba 97FD      		sbrc r25,7
+ 281 00bc 00C0      		rjmp .L27
+ 147:../../../../quantum/audio/audio.c ****         if (voices < 0)
+ 282               		.loc 1 147 0
+ 283 00be 9093 0000 		sts voices+1,r25
+ 284 00c2 8093 0000 		sts voices,r24
+ 285 00c6 00C0      		rjmp .L20
+ 286               	.L27:
+ 149:../../../../quantum/audio/audio.c ****             voices = 0;
+ 287               		.loc 1 149 0
+ 288 00c8 1092 0000 		sts voices+1,__zero_reg__
+ 289 00cc 1092 0000 		sts voices,__zero_reg__
+ 290               	.L20:
+ 150:../../../../quantum/audio/audio.c ****         if (voice_place >= voices) {
+ 291               		.loc 1 150 0
+ 292 00d0 8091 0000 		lds r24,voices
+ 293 00d4 9091 0000 		lds r25,voices+1
+ 294 00d8 2091 0000 		lds r18,voice_place
+ 295 00dc 3091 0000 		lds r19,voice_place+1
+ 296 00e0 2817      		cp r18,r24
+ 297 00e2 3907      		cpc r19,r25
+ 298 00e4 04F0      		brlt .L21
+ 151:../../../../quantum/audio/audio.c ****             voice_place = 0;
+ 299               		.loc 1 151 0
+ 300 00e6 1092 0000 		sts voice_place+1,__zero_reg__
+ 301 00ea 1092 0000 		sts voice_place,__zero_reg__
+ 302               	.L21:
+ 152:../../../../quantum/audio/audio.c ****         }
+ 153:../../../../quantum/audio/audio.c ****         if (voices == 0) {
+ 303               		.loc 1 153 0
+ 304 00ee 892B      		or r24,r25
+ 305 00f0 01F4      		brne .L8
+ 154:../../../../quantum/audio/audio.c ****             DISABLE_AUDIO_COUNTER_3_ISR;
+ 306               		.loc 1 154 0
+ 307 00f2 8091 7100 		lds r24,113
+ 308 00f6 8D7F      		andi r24,lo8(-3)
+ 309 00f8 8093 7100 		sts 113,r24
+ 155:../../../../quantum/audio/audio.c ****             DISABLE_AUDIO_COUNTER_3_OUTPUT;
+ 310               		.loc 1 155 0
+ 311 00fc 8091 9000 		lds r24,144
+ 312 0100 8F73      		andi r24,lo8(63)
+ 313 0102 8093 9000 		sts 144,r24
+ 156:../../../../quantum/audio/audio.c ****             frequency = 0;
+ 314               		.loc 1 156 0
+ 315 0106 1092 0000 		sts frequency,__zero_reg__
+ 316 010a 1092 0000 		sts frequency+1,__zero_reg__
+ 317 010e 1092 0000 		sts frequency+2,__zero_reg__
+ 318 0112 1092 0000 		sts frequency+3,__zero_reg__
+ 157:../../../../quantum/audio/audio.c ****             volume = 0;
+ 319               		.loc 1 157 0
+ 320 0116 1092 0000 		sts volume+1,__zero_reg__
+ 321 011a 1092 0000 		sts volume,__zero_reg__
+ 158:../../../../quantum/audio/audio.c ****             playing_note = false;
+ 322               		.loc 1 158 0
+ 323 011e 1092 0000 		sts playing_note,__zero_reg__
+ 324               	.LVL15:
+ 325               	.L8:
+ 326               	/* epilogue start */
+ 159:../../../../quantum/audio/audio.c ****         }
+ 160:../../../../quantum/audio/audio.c ****     }
+ 161:../../../../quantum/audio/audio.c **** }
+ 327               		.loc 1 161 0
+ 328 0122 DF91      		pop r29
+ 329 0124 CF91      		pop r28
+ 330 0126 1F91      		pop r17
+ 331 0128 0F91      		pop r16
+ 332 012a FF90      		pop r15
+ 333 012c EF90      		pop r14
+ 334 012e DF90      		pop r13
+ 335 0130 CF90      		pop r12
+ 336 0132 0895      		ret
+ 337               		.cfi_endproc
+ 338               	.LFE109:
+ 340               	.global	__gtsf2
+ 341               	.global	__addsf3
+ 342               	.global	__divsf3
+ 343               	.global	__mulsf3
+ 344               	.global	__nesf2
+ 345               	.global	__ltsf2
+ 346               	.global	__fixunssfsi
+ 347               	.global	__floatunsisf
+ 348               	.global	__gesf2
+ 349               		.section	.text.__vector_32,"ax",@progbits
+ 350               	.global	__vector_32
+ 352               	__vector_32:
+ 353               	.LFB110:
+ 162:../../../../quantum/audio/audio.c **** 
+ 163:../../../../quantum/audio/audio.c **** #ifdef VIBRATO_ENABLE
+ 164:../../../../quantum/audio/audio.c **** 
+ 165:../../../../quantum/audio/audio.c **** float mod(float a, int b)
+ 166:../../../../quantum/audio/audio.c **** {
+ 167:../../../../quantum/audio/audio.c ****     float r = fmod(a, b);
+ 168:../../../../quantum/audio/audio.c ****     return r < 0 ? r + b : r;
+ 169:../../../../quantum/audio/audio.c **** }
+ 170:../../../../quantum/audio/audio.c **** 
+ 171:../../../../quantum/audio/audio.c **** float vibrato(float average_freq) {
+ 172:../../../../quantum/audio/audio.c ****     #ifdef VIBRATO_STRENGTH_ENABLE
+ 173:../../../../quantum/audio/audio.c ****         float vibrated_freq = average_freq * pow(vibrato_lut[(int)vibrato_counter], vibrato_strengt
+ 174:../../../../quantum/audio/audio.c ****     #else
+ 175:../../../../quantum/audio/audio.c ****         float vibrated_freq = average_freq * vibrato_lut[(int)vibrato_counter];
+ 176:../../../../quantum/audio/audio.c ****     #endif
+ 177:../../../../quantum/audio/audio.c ****     vibrato_counter = mod((vibrato_counter + vibrato_rate * (1.0 + 440.0/average_freq)), VIBRATO_LU
+ 178:../../../../quantum/audio/audio.c ****     return vibrated_freq;
+ 179:../../../../quantum/audio/audio.c **** }
+ 180:../../../../quantum/audio/audio.c **** 
+ 181:../../../../quantum/audio/audio.c **** #endif
+ 182:../../../../quantum/audio/audio.c **** 
+ 183:../../../../quantum/audio/audio.c **** ISR(TIMER3_COMPA_vect)
+ 184:../../../../quantum/audio/audio.c **** {
+ 354               		.loc 1 184 0
+ 355               		.cfi_startproc
+ 356 0000 1F92      		push r1
+ 357               	.LCFI8:
+ 358               		.cfi_def_cfa_offset 3
+ 359               		.cfi_offset 1, -2
+ 360 0002 0F92      		push r0
+ 361               	.LCFI9:
+ 362               		.cfi_def_cfa_offset 4
+ 363               		.cfi_offset 0, -3
+ 364 0004 0FB6      		in r0,__SREG__
+ 365 0006 0F92      		push r0
+ 366 0008 1124      		clr __zero_reg__
+ 367 000a 4F92      		push r4
+ 368               	.LCFI10:
+ 369               		.cfi_def_cfa_offset 5
+ 370               		.cfi_offset 4, -4
+ 371 000c 5F92      		push r5
+ 372               	.LCFI11:
+ 373               		.cfi_def_cfa_offset 6
+ 374               		.cfi_offset 5, -5
+ 375 000e 6F92      		push r6
+ 376               	.LCFI12:
+ 377               		.cfi_def_cfa_offset 7
+ 378               		.cfi_offset 6, -6
+ 379 0010 7F92      		push r7
+ 380               	.LCFI13:
+ 381               		.cfi_def_cfa_offset 8
+ 382               		.cfi_offset 7, -7
+ 383 0012 8F92      		push r8
+ 384               	.LCFI14:
+ 385               		.cfi_def_cfa_offset 9
+ 386               		.cfi_offset 8, -8
+ 387 0014 9F92      		push r9
+ 388               	.LCFI15:
+ 389               		.cfi_def_cfa_offset 10
+ 390               		.cfi_offset 9, -9
+ 391 0016 AF92      		push r10
+ 392               	.LCFI16:
+ 393               		.cfi_def_cfa_offset 11
+ 394               		.cfi_offset 10, -10
+ 395 0018 BF92      		push r11
+ 396               	.LCFI17:
+ 397               		.cfi_def_cfa_offset 12
+ 398               		.cfi_offset 11, -11
+ 399 001a CF92      		push r12
+ 400               	.LCFI18:
+ 401               		.cfi_def_cfa_offset 13
+ 402               		.cfi_offset 12, -12
+ 403 001c DF92      		push r13
+ 404               	.LCFI19:
+ 405               		.cfi_def_cfa_offset 14
+ 406               		.cfi_offset 13, -13
+ 407 001e EF92      		push r14
+ 408               	.LCFI20:
+ 409               		.cfi_def_cfa_offset 15
+ 410               		.cfi_offset 14, -14
+ 411 0020 FF92      		push r15
+ 412               	.LCFI21:
+ 413               		.cfi_def_cfa_offset 16
+ 414               		.cfi_offset 15, -15
+ 415 0022 2F93      		push r18
+ 416               	.LCFI22:
+ 417               		.cfi_def_cfa_offset 17
+ 418               		.cfi_offset 18, -16
+ 419 0024 3F93      		push r19
+ 420               	.LCFI23:
+ 421               		.cfi_def_cfa_offset 18
+ 422               		.cfi_offset 19, -17
+ 423 0026 4F93      		push r20
+ 424               	.LCFI24:
+ 425               		.cfi_def_cfa_offset 19
+ 426               		.cfi_offset 20, -18
+ 427 0028 5F93      		push r21
+ 428               	.LCFI25:
+ 429               		.cfi_def_cfa_offset 20
+ 430               		.cfi_offset 21, -19
+ 431 002a 6F93      		push r22
+ 432               	.LCFI26:
+ 433               		.cfi_def_cfa_offset 21
+ 434               		.cfi_offset 22, -20
+ 435 002c 7F93      		push r23
+ 436               	.LCFI27:
+ 437               		.cfi_def_cfa_offset 22
+ 438               		.cfi_offset 23, -21
+ 439 002e 8F93      		push r24
+ 440               	.LCFI28:
+ 441               		.cfi_def_cfa_offset 23
+ 442               		.cfi_offset 24, -22
+ 443 0030 9F93      		push r25
+ 444               	.LCFI29:
+ 445               		.cfi_def_cfa_offset 24
+ 446               		.cfi_offset 25, -23
+ 447 0032 AF93      		push r26
+ 448               	.LCFI30:
+ 449               		.cfi_def_cfa_offset 25
+ 450               		.cfi_offset 26, -24
+ 451 0034 BF93      		push r27
+ 452               	.LCFI31:
+ 453               		.cfi_def_cfa_offset 26
+ 454               		.cfi_offset 27, -25
+ 455 0036 CF93      		push r28
+ 456               	.LCFI32:
+ 457               		.cfi_def_cfa_offset 27
+ 458               		.cfi_offset 28, -26
+ 459 0038 DF93      		push r29
+ 460               	.LCFI33:
+ 461               		.cfi_def_cfa_offset 28
+ 462               		.cfi_offset 29, -27
+ 463 003a EF93      		push r30
+ 464               	.LCFI34:
+ 465               		.cfi_def_cfa_offset 29
+ 466               		.cfi_offset 30, -28
+ 467 003c FF93      		push r31
+ 468               	.LCFI35:
+ 469               		.cfi_def_cfa_offset 30
+ 470               		.cfi_offset 31, -29
+ 471               	/* prologue: Signal */
+ 472               	/* frame size = 0 */
+ 473               	/* stack size = 29 */
+ 474               	.L__stack_usage = 29
+ 185:../../../../quantum/audio/audio.c **** 	float freq;
+ 186:../../../../quantum/audio/audio.c **** 
+ 187:../../../../quantum/audio/audio.c **** 	if (playing_note) {
+ 475               		.loc 1 187 0
+ 476 003e 8091 0000 		lds r24,playing_note
+ 477 0042 8823      		tst r24
+ 478 0044 01F4      		brne .+2
+ 479 0046 00C0      		rjmp .L29
+ 188:../../../../quantum/audio/audio.c **** 		if (voices > 0) {
+ 480               		.loc 1 188 0
+ 481 0048 C091 0000 		lds r28,voices
+ 482 004c D091 0000 		lds r29,voices+1
+ 483 0050 1C16      		cp __zero_reg__,r28
+ 484 0052 1D06      		cpc __zero_reg__,r29
+ 485 0054 04F0      		brlt .+2
+ 486 0056 00C0      		rjmp .L29
+ 189:../../../../quantum/audio/audio.c **** 			if (polyphony_rate > 0) {
+ 487               		.loc 1 189 0
+ 488 0058 4090 0000 		lds r4,polyphony_rate
+ 489 005c 5090 0000 		lds r5,polyphony_rate+1
+ 490 0060 6090 0000 		lds r6,polyphony_rate+2
+ 491 0064 7090 0000 		lds r7,polyphony_rate+3
+ 492 0068 20E0      		ldi r18,0
+ 493 006a 30E0      		ldi r19,0
+ 494 006c A901      		movw r20,r18
+ 495 006e C301      		movw r24,r6
+ 496 0070 B201      		movw r22,r4
+ 497 0072 0E94 0000 		call __gtsf2
+ 498               	.LVL16:
+ 499 0076 1816      		cp __zero_reg__,r24
+ 500 0078 04F0      		brlt .+2
+ 501 007a 00C0      		rjmp .L86
+ 190:../../../../quantum/audio/audio.c **** 				if (voices > 1) {
+ 502               		.loc 1 190 0
+ 503 007c C130      		cpi r28,1
+ 504 007e D105      		cpc r29,__zero_reg__
+ 505 0080 01F4      		brne .+2
+ 506 0082 00C0      		rjmp .L33
+ 191:../../../../quantum/audio/audio.c **** 					voice_place %= voices;
+ 507               		.loc 1 191 0
+ 508 0084 8091 0000 		lds r24,voice_place
+ 509 0088 9091 0000 		lds r25,voice_place+1
+ 510 008c BE01      		movw r22,r28
+ 511 008e 0E94 0000 		call __divmodhi4
+ 512 0092 7C01      		movw r14,r24
+ 513 0094 9093 0000 		sts voice_place+1,r25
+ 514 0098 8093 0000 		sts voice_place,r24
+ 192:../../../../quantum/audio/audio.c **** 					if (place++ > (frequencies[voice_place] / polyphony_rate / CPU_PRESCALER)) {
+ 515               		.loc 1 192 0
+ 516 009c 8090 0000 		lds r8,place
+ 517 00a0 9090 0000 		lds r9,place+1
+ 518 00a4 A090 0000 		lds r10,place+2
+ 519 00a8 B090 0000 		lds r11,place+3
+ 520 00ac 20E0      		ldi r18,0
+ 521 00ae 30E0      		ldi r19,0
+ 522 00b0 40E8      		ldi r20,lo8(-128)
+ 523 00b2 5FE3      		ldi r21,lo8(63)
+ 524 00b4 C501      		movw r24,r10
+ 525 00b6 B401      		movw r22,r8
+ 526 00b8 0E94 0000 		call __addsf3
+ 527               	.LVL17:
+ 528 00bc 6093 0000 		sts place,r22
+ 529 00c0 7093 0000 		sts place+1,r23
+ 530 00c4 8093 0000 		sts place+2,r24
+ 531 00c8 9093 0000 		sts place+3,r25
+ 532 00cc F701      		movw r30,r14
+ 533 00ce EE0F      		lsl r30
+ 534 00d0 FF1F      		rol r31
+ 535 00d2 EE0F      		lsl r30
+ 536 00d4 FF1F      		rol r31
+ 537 00d6 E050      		subi r30,lo8(-(frequencies))
+ 538 00d8 F040      		sbci r31,hi8(-(frequencies))
+ 539 00da A301      		movw r20,r6
+ 540 00dc 9201      		movw r18,r4
+ 541 00de 6081      		ld r22,Z
+ 542 00e0 7181      		ldd r23,Z+1
+ 543 00e2 8281      		ldd r24,Z+2
+ 544 00e4 9381      		ldd r25,Z+3
+ 545 00e6 0E94 0000 		call __divsf3
+ 546               	.LVL18:
+ 547 00ea 20E0      		ldi r18,0
+ 548 00ec 30E0      		ldi r19,0
+ 549 00ee 40E0      		ldi r20,0
+ 550 00f0 5EE3      		ldi r21,lo8(62)
+ 551 00f2 0E94 0000 		call __mulsf3
+ 552               	.LVL19:
+ 553 00f6 9B01      		movw r18,r22
+ 554 00f8 AC01      		movw r20,r24
+ 555 00fa C501      		movw r24,r10
+ 556 00fc B401      		movw r22,r8
+ 557 00fe 0E94 0000 		call __gtsf2
+ 558               	.LVL20:
+ 559 0102 1816      		cp __zero_reg__,r24
+ 560 0104 04F4      		brge .L33
+ 193:../../../../quantum/audio/audio.c **** 						voice_place = (voice_place + 1) % voices;
+ 561               		.loc 1 193 0
+ 562 0106 C701      		movw r24,r14
+ 563 0108 0196      		adiw r24,1
+ 564 010a BE01      		movw r22,r28
+ 565 010c 0E94 0000 		call __divmodhi4
+ 566 0110 9093 0000 		sts voice_place+1,r25
+ 567 0114 8093 0000 		sts voice_place,r24
+ 194:../../../../quantum/audio/audio.c **** 						place = 0.0;
+ 568               		.loc 1 194 0
+ 569 0118 1092 0000 		sts place,__zero_reg__
+ 570 011c 1092 0000 		sts place+1,__zero_reg__
+ 571 0120 1092 0000 		sts place+2,__zero_reg__
+ 572 0124 1092 0000 		sts place+3,__zero_reg__
+ 573               	.L33:
+ 195:../../../../quantum/audio/audio.c **** 					}
+ 196:../../../../quantum/audio/audio.c **** 				}
+ 197:../../../../quantum/audio/audio.c **** 
+ 198:../../../../quantum/audio/audio.c **** 				#ifdef VIBRATO_ENABLE
+ 199:../../../../quantum/audio/audio.c **** 					if (vibrato_strength > 0) {
+ 200:../../../../quantum/audio/audio.c **** 						freq = vibrato(frequencies[voice_place]);
+ 201:../../../../quantum/audio/audio.c **** 					} else {
+ 202:../../../../quantum/audio/audio.c **** 						freq = frequencies[voice_place];
+ 203:../../../../quantum/audio/audio.c **** 					}
+ 204:../../../../quantum/audio/audio.c **** 				#else
+ 205:../../../../quantum/audio/audio.c **** 					freq = frequencies[voice_place];
+ 574               		.loc 1 205 0
+ 575 0128 E091 0000 		lds r30,voice_place
+ 576 012c F091 0000 		lds r31,voice_place+1
+ 577 0130 EE0F      		lsl r30
+ 578 0132 FF1F      		rol r31
+ 579 0134 EE0F      		lsl r30
+ 580 0136 FF1F      		rol r31
+ 581 0138 E050      		subi r30,lo8(-(frequencies))
+ 582 013a F040      		sbci r31,hi8(-(frequencies))
+ 583 013c 6081      		ld r22,Z
+ 584 013e 7181      		ldd r23,Z+1
+ 585 0140 8281      		ldd r24,Z+2
+ 586 0142 9381      		ldd r25,Z+3
+ 587               	.LVL21:
+ 588 0144 00C0      		rjmp .L36
+ 589               	.LVL22:
+ 590               	.L86:
+ 206:../../../../quantum/audio/audio.c **** 				#endif
+ 207:../../../../quantum/audio/audio.c **** 			} else {
+ 208:../../../../quantum/audio/audio.c **** 				if (frequency != 0 && frequency < frequencies[voices - 1] && frequency < frequencies[voices - 1
+ 591               		.loc 1 208 0
+ 592 0146 C090 0000 		lds r12,frequency
+ 593 014a D090 0000 		lds r13,frequency+1
+ 594 014e E090 0000 		lds r14,frequency+2
+ 595 0152 F090 0000 		lds r15,frequency+3
+ 596 0156 20E0      		ldi r18,0
+ 597 0158 30E0      		ldi r19,0
+ 598 015a A901      		movw r20,r18
+ 599 015c C701      		movw r24,r14
+ 600 015e B601      		movw r22,r12
+ 601 0160 0E94 0000 		call __nesf2
+ 602               	.LVL23:
+ 603 0164 2197      		sbiw r28,1
+ 604 0166 8823      		tst r24
+ 605 0168 01F4      		brne .+2
+ 606 016a 00C0      		rjmp .L37
+ 607               		.loc 1 208 0 is_stmt 0 discriminator 1
+ 608 016c FE01      		movw r30,r28
+ 609 016e EE0F      		lsl r30
+ 610 0170 FF1F      		rol r31
+ 611 0172 EE0F      		lsl r30
+ 612 0174 FF1F      		rol r31
+ 613 0176 E050      		subi r30,lo8(-(frequencies))
+ 614 0178 F040      		sbci r31,hi8(-(frequencies))
+ 615 017a 8080      		ld r8,Z
+ 616 017c 9180      		ldd r9,Z+1
+ 617 017e A280      		ldd r10,Z+2
+ 618 0180 B380      		ldd r11,Z+3
+ 619 0182 A501      		movw r20,r10
+ 620 0184 9401      		movw r18,r8
+ 621 0186 C701      		movw r24,r14
+ 622 0188 B601      		movw r22,r12
+ 623 018a 0E94 0000 		call __ltsf2
+ 624               	.LVL24:
+ 625 018e 87FF      		sbrs r24,7
+ 626 0190 00C0      		rjmp .L39
+ 627               		.loc 1 208 0 discriminator 2
+ 628 0192 A501      		movw r20,r10
+ 629 0194 9401      		movw r18,r8
+ 630 0196 60E0      		ldi r22,0
+ 631 0198 70E0      		ldi r23,0
+ 632 019a 8CED      		ldi r24,lo8(-36)
+ 633 019c 93EC      		ldi r25,lo8(-61)
+ 634 019e 0E94 0000 		call __divsf3
+ 635               	.LVL25:
+ 636 01a2 20E0      		ldi r18,0
+ 637 01a4 30E0      		ldi r19,0
+ 638 01a6 40E4      		ldi r20,lo8(64)
+ 639 01a8 51E4      		ldi r21,lo8(65)
+ 640 01aa 0E94 0000 		call __divsf3
+ 641               	.LVL26:
+ 642 01ae 20E0      		ldi r18,0
+ 643 01b0 30E0      		ldi r19,0
+ 644 01b2 40E0      		ldi r20,0
+ 645 01b4 5FE3      		ldi r21,lo8(63)
+ 646 01b6 0E94 0000 		call __mulsf3
+ 647               	.LVL27:
+ 648 01ba 9B01      		movw r18,r22
+ 649 01bc AC01      		movw r20,r24
+ 650 01be 60E0      		ldi r22,0
+ 651 01c0 70E0      		ldi r23,0
+ 652 01c2 80E0      		ldi r24,0
+ 653 01c4 90E4      		ldi r25,lo8(64)
+ 654 01c6 0E94 0000 		call pow
+ 655               	.LVL28:
+ 656 01ca 9B01      		movw r18,r22
+ 657 01cc AC01      		movw r20,r24
+ 658 01ce C501      		movw r24,r10
+ 659 01d0 B401      		movw r22,r8
+ 660 01d2 0E94 0000 		call __mulsf3
+ 661               	.LVL29:
+ 662 01d6 9B01      		movw r18,r22
+ 663 01d8 AC01      		movw r20,r24
+ 664 01da C701      		movw r24,r14
+ 665 01dc B601      		movw r22,r12
+ 666 01de 0E94 0000 		call __ltsf2
+ 667               	.LVL30:
+ 668 01e2 87FF      		sbrs r24,7
+ 669 01e4 00C0      		rjmp .L39
+ 209:../../../../quantum/audio/audio.c **** 					frequency = frequency * pow(2, 440/frequency/12/2);
+ 670               		.loc 1 209 0 is_stmt 1
+ 671 01e6 A701      		movw r20,r14
+ 672 01e8 9601      		movw r18,r12
+ 673 01ea 60E0      		ldi r22,0
+ 674 01ec 70E0      		ldi r23,0
+ 675 01ee 8CED      		ldi r24,lo8(-36)
+ 676 01f0 93E4      		ldi r25,lo8(67)
+ 677 01f2 00C0      		rjmp .L88
+ 678               	.L39:
+ 210:../../../../quantum/audio/audio.c **** 				} else if (frequency != 0 && frequency > frequencies[voices - 1] && frequency > frequencies[voi
+ 679               		.loc 1 210 0 discriminator 1
+ 680 01f4 A501      		movw r20,r10
+ 681 01f6 9401      		movw r18,r8
+ 682 01f8 C701      		movw r24,r14
+ 683 01fa B601      		movw r22,r12
+ 684 01fc 0E94 0000 		call __gtsf2
+ 685               	.LVL31:
+ 686 0200 1816      		cp __zero_reg__,r24
+ 687 0202 04F0      		brlt .+2
+ 688 0204 00C0      		rjmp .L37
+ 689               		.loc 1 210 0 is_stmt 0 discriminator 2
+ 690 0206 A501      		movw r20,r10
+ 691 0208 9401      		movw r18,r8
+ 692 020a 60E0      		ldi r22,0
+ 693 020c 70E0      		ldi r23,0
+ 694 020e 8CED      		ldi r24,lo8(-36)
+ 695 0210 93E4      		ldi r25,lo8(67)
+ 696 0212 0E94 0000 		call __divsf3
+ 697               	.LVL32:
+ 698 0216 20E0      		ldi r18,0
+ 699 0218 30E0      		ldi r19,0
+ 700 021a 40E4      		ldi r20,lo8(64)
+ 701 021c 51E4      		ldi r21,lo8(65)
+ 702 021e 0E94 0000 		call __divsf3
+ 703               	.LVL33:
+ 704 0222 20E0      		ldi r18,0
+ 705 0224 30E0      		ldi r19,0
+ 706 0226 40E0      		ldi r20,0
+ 707 0228 5FE3      		ldi r21,lo8(63)
+ 708 022a 0E94 0000 		call __mulsf3
+ 709               	.LVL34:
+ 710 022e 9B01      		movw r18,r22
+ 711 0230 AC01      		movw r20,r24
+ 712 0232 60E0      		ldi r22,0
+ 713 0234 70E0      		ldi r23,0
+ 714 0236 80E0      		ldi r24,0
+ 715 0238 90E4      		ldi r25,lo8(64)
+ 716 023a 0E94 0000 		call pow
+ 717               	.LVL35:
+ 718 023e 9B01      		movw r18,r22
+ 719 0240 AC01      		movw r20,r24
+ 720 0242 C501      		movw r24,r10
+ 721 0244 B401      		movw r22,r8
+ 722 0246 0E94 0000 		call __mulsf3
+ 723               	.LVL36:
+ 724 024a 9B01      		movw r18,r22
+ 725 024c AC01      		movw r20,r24
+ 726 024e C701      		movw r24,r14
+ 727 0250 B601      		movw r22,r12
+ 728 0252 0E94 0000 		call __gtsf2
+ 729               	.LVL37:
+ 730 0256 1816      		cp __zero_reg__,r24
+ 731 0258 04F4      		brge .L37
+ 211:../../../../quantum/audio/audio.c **** 					frequency = frequency * pow(2, -440/frequency/12/2);
+ 732               		.loc 1 211 0 is_stmt 1
+ 733 025a A701      		movw r20,r14
+ 734 025c 9601      		movw r18,r12
+ 735 025e 60E0      		ldi r22,0
+ 736 0260 70E0      		ldi r23,0
+ 737 0262 8CED      		ldi r24,lo8(-36)
+ 738 0264 93EC      		ldi r25,lo8(-61)
+ 739               	.L88:
+ 740 0266 0E94 0000 		call __divsf3
+ 741               	.LVL38:
+ 742 026a 20E0      		ldi r18,0
+ 743 026c 30E0      		ldi r19,0
+ 744 026e 40E4      		ldi r20,lo8(64)
+ 745 0270 51E4      		ldi r21,lo8(65)
+ 746 0272 0E94 0000 		call __divsf3
+ 747               	.LVL39:
+ 748 0276 20E0      		ldi r18,0
+ 749 0278 30E0      		ldi r19,0
+ 750 027a 40E0      		ldi r20,0
+ 751 027c 5FE3      		ldi r21,lo8(63)
+ 752 027e 0E94 0000 		call __mulsf3
+ 753               	.LVL40:
+ 754 0282 9B01      		movw r18,r22
+ 755 0284 AC01      		movw r20,r24
+ 756 0286 60E0      		ldi r22,0
+ 757 0288 70E0      		ldi r23,0
+ 758 028a 80E0      		ldi r24,0
+ 759 028c 90E4      		ldi r25,lo8(64)
+ 760 028e 0E94 0000 		call pow
+ 761               	.LVL41:
+ 762 0292 9B01      		movw r18,r22
+ 763 0294 AC01      		movw r20,r24
+ 764 0296 C701      		movw r24,r14
+ 765 0298 B601      		movw r22,r12
+ 766 029a 0E94 0000 		call __mulsf3
+ 767               	.LVL42:
+ 768 029e 6093 0000 		sts frequency,r22
+ 769 02a2 7093 0000 		sts frequency+1,r23
+ 770 02a6 8093 0000 		sts frequency+2,r24
+ 771 02aa 9093 0000 		sts frequency+3,r25
+ 772 02ae 00C0      		rjmp .L42
+ 773               	.L37:
+ 212:../../../../quantum/audio/audio.c **** 				} else {
+ 213:../../../../quantum/audio/audio.c **** 					frequency = frequencies[voices - 1];
+ 774               		.loc 1 213 0
+ 775 02b0 FE01      		movw r30,r28
+ 776 02b2 EE0F      		lsl r30
+ 777 02b4 FF1F      		rol r31
+ 778 02b6 EE0F      		lsl r30
+ 779 02b8 FF1F      		rol r31
+ 780 02ba E050      		subi r30,lo8(-(frequencies))
+ 781 02bc F040      		sbci r31,hi8(-(frequencies))
+ 782 02be 8081      		ld r24,Z
+ 783 02c0 9181      		ldd r25,Z+1
+ 784 02c2 A281      		ldd r26,Z+2
+ 785 02c4 B381      		ldd r27,Z+3
+ 786 02c6 8093 0000 		sts frequency,r24
+ 787 02ca 9093 0000 		sts frequency+1,r25
+ 788 02ce A093 0000 		sts frequency+2,r26
+ 789 02d2 B093 0000 		sts frequency+3,r27
+ 790               	.L42:
+ 214:../../../../quantum/audio/audio.c **** 				}
+ 215:../../../../quantum/audio/audio.c **** 
+ 216:../../../../quantum/audio/audio.c **** 				#ifdef VIBRATO_ENABLE
+ 217:../../../../quantum/audio/audio.c **** 					if (vibrato_strength > 0) {
+ 218:../../../../quantum/audio/audio.c **** 						freq = vibrato(frequency);
+ 219:../../../../quantum/audio/audio.c **** 					} else {
+ 220:../../../../quantum/audio/audio.c **** 						freq = frequency;
+ 221:../../../../quantum/audio/audio.c **** 					}
+ 222:../../../../quantum/audio/audio.c **** 				#else
+ 223:../../../../quantum/audio/audio.c **** 					freq = frequency;
+ 791               		.loc 1 223 0
+ 792 02d6 6091 0000 		lds r22,frequency
+ 793 02da 7091 0000 		lds r23,frequency+1
+ 794 02de 8091 0000 		lds r24,frequency+2
+ 795 02e2 9091 0000 		lds r25,frequency+3
+ 796               	.LVL43:
+ 797               	.L36:
+ 224:../../../../quantum/audio/audio.c **** 				#endif
+ 225:../../../../quantum/audio/audio.c **** 			}
+ 226:../../../../quantum/audio/audio.c **** 
+ 227:../../../../quantum/audio/audio.c **** 			if (envelope_index < 65535) {
+ 798               		.loc 1 227 0
+ 799 02e6 2091 0000 		lds r18,envelope_index
+ 800 02ea 3091 0000 		lds r19,envelope_index+1
+ 801 02ee 2F3F      		cpi r18,-1
+ 802 02f0 4FEF      		ldi r20,-1
+ 803 02f2 3407      		cpc r19,r20
+ 804 02f4 01F0      		breq .L45
+ 228:../../../../quantum/audio/audio.c **** 				envelope_index++;
+ 805               		.loc 1 228 0
+ 806 02f6 2F5F      		subi r18,-1
+ 807 02f8 3F4F      		sbci r19,-1
+ 808 02fa 3093 0000 		sts envelope_index+1,r19
+ 809 02fe 2093 0000 		sts envelope_index,r18
+ 810               	.L45:
+ 229:../../../../quantum/audio/audio.c **** 			}
+ 230:../../../../quantum/audio/audio.c **** 
+ 231:../../../../quantum/audio/audio.c **** 			freq = voice_envelope(freq);
+ 811               		.loc 1 231 0
+ 812 0302 0E94 0000 		call voice_envelope
+ 813               	.LVL44:
+ 814 0306 6B01      		movw r12,r22
+ 815 0308 7C01      		movw r14,r24
+ 816               	.LVL45:
+ 232:../../../../quantum/audio/audio.c **** 
+ 233:../../../../quantum/audio/audio.c **** 			if (freq < 30.517578125) {
+ 817               		.loc 1 233 0
+ 818 030a 20E0      		ldi r18,0
+ 819 030c 34E2      		ldi r19,lo8(36)
+ 820 030e 44EF      		ldi r20,lo8(-12)
+ 821 0310 51E4      		ldi r21,lo8(65)
+ 822 0312 0E94 0000 		call __ltsf2
+ 823               	.LVL46:
+ 824 0316 87FF      		sbrs r24,7
+ 825 0318 00C0      		rjmp .L46
+ 234:../../../../quantum/audio/audio.c **** 				freq = 30.52;
+ 826               		.loc 1 234 0
+ 827 031a 86EF      		ldi r24,lo8(-10)
+ 828 031c C82E      		mov r12,r24
+ 829 031e 88E2      		ldi r24,lo8(40)
+ 830 0320 D82E      		mov r13,r24
+ 831 0322 84EF      		ldi r24,lo8(-12)
+ 832 0324 E82E      		mov r14,r24
+ 833 0326 81E4      		ldi r24,lo8(65)
+ 834 0328 F82E      		mov r15,r24
+ 835               	.LVL47:
+ 836               	.L46:
+ 235:../../../../quantum/audio/audio.c **** 			}
+ 236:../../../../quantum/audio/audio.c **** 
+ 237:../../../../quantum/audio/audio.c **** 			TIMER_3_PERIOD = (uint16_t)(((float)F_CPU) / (freq * CPU_PRESCALER));
+ 837               		.loc 1 237 0
+ 838 032a 20E0      		ldi r18,0
+ 839 032c 30E0      		ldi r19,0
+ 840 032e 40E0      		ldi r20,0
+ 841 0330 51E4      		ldi r21,lo8(65)
+ 842 0332 C701      		movw r24,r14
+ 843 0334 B601      		movw r22,r12
+ 844 0336 0E94 0000 		call __mulsf3
+ 845               	.LVL48:
+ 846 033a 9B01      		movw r18,r22
+ 847 033c AC01      		movw r20,r24
+ 848 033e 60E0      		ldi r22,0
+ 849 0340 74E2      		ldi r23,lo8(36)
+ 850 0342 84E7      		ldi r24,lo8(116)
+ 851 0344 9BE4      		ldi r25,lo8(75)
+ 852 0346 0E94 0000 		call __divsf3
+ 853               	.LVL49:
+ 854 034a 6B01      		movw r12,r22
+ 855 034c 7C01      		movw r14,r24
+ 856               	.LVL50:
+ 857 034e 0E94 0000 		call __fixunssfsi
+ 858               	.LVL51:
+ 859 0352 7093 9700 		sts 150+1,r23
+ 860 0356 6093 9600 		sts 150,r22
+ 238:../../../../quantum/audio/audio.c **** 			TIMER_3_DUTY_CYCLE = (uint16_t)((((float)F_CPU) / (freq * CPU_PRESCALER)) * note_timbre);
+ 861               		.loc 1 238 0
+ 862 035a 2091 0000 		lds r18,note_timbre
+ 863 035e 3091 0000 		lds r19,note_timbre+1
+ 864 0362 4091 0000 		lds r20,note_timbre+2
+ 865 0366 5091 0000 		lds r21,note_timbre+3
+ 866 036a C701      		movw r24,r14
+ 867 036c B601      		movw r22,r12
+ 868 036e 0E94 0000 		call __mulsf3
+ 869               	.LVL52:
+ 870 0372 0E94 0000 		call __fixunssfsi
+ 871               	.LVL53:
+ 872 0376 7093 9900 		sts 152+1,r23
+ 873 037a 6093 9800 		sts 152,r22
+ 874               	.L29:
+ 239:../../../../quantum/audio/audio.c **** 		}
+ 240:../../../../quantum/audio/audio.c **** 	}
+ 241:../../../../quantum/audio/audio.c **** 
+ 242:../../../../quantum/audio/audio.c **** 	if (playing_notes) {
+ 875               		.loc 1 242 0
+ 876 037e 8091 0000 		lds r24,playing_notes
+ 877 0382 8823      		tst r24
+ 878 0384 01F4      		brne .+2
+ 879 0386 00C0      		rjmp .L49
+ 880               	.LBB5:
+ 243:../../../../quantum/audio/audio.c **** 		if (note_frequency > 0) {
+ 881               		.loc 1 243 0
+ 882 0388 C090 0000 		lds r12,note_frequency
+ 883 038c D090 0000 		lds r13,note_frequency+1
+ 884 0390 E090 0000 		lds r14,note_frequency+2
+ 885 0394 F090 0000 		lds r15,note_frequency+3
+ 886 0398 20E0      		ldi r18,0
+ 887 039a 30E0      		ldi r19,0
+ 888 039c A901      		movw r20,r18
+ 889 039e C701      		movw r24,r14
+ 890 03a0 B601      		movw r22,r12
+ 891 03a2 0E94 0000 		call __gtsf2
+ 892               	.LVL54:
+ 893 03a6 1816      		cp __zero_reg__,r24
+ 894 03a8 04F4      		brge .L87
+ 895               	.LVL55:
+ 244:../../../../quantum/audio/audio.c **** 			#ifdef VIBRATO_ENABLE
+ 245:../../../../quantum/audio/audio.c **** 				if (vibrato_strength > 0) {
+ 246:../../../../quantum/audio/audio.c **** 					freq = vibrato(note_frequency);
+ 247:../../../../quantum/audio/audio.c **** 				} else {
+ 248:../../../../quantum/audio/audio.c **** 					freq = note_frequency;
+ 249:../../../../quantum/audio/audio.c **** 				}
+ 250:../../../../quantum/audio/audio.c **** 			#else
+ 251:../../../../quantum/audio/audio.c **** 					freq = note_frequency;
+ 252:../../../../quantum/audio/audio.c **** 			#endif
+ 253:../../../../quantum/audio/audio.c **** 
+ 254:../../../../quantum/audio/audio.c **** 			if (envelope_index < 65535) {
+ 896               		.loc 1 254 0
+ 897 03aa 8091 0000 		lds r24,envelope_index
+ 898 03ae 9091 0000 		lds r25,envelope_index+1
+ 899 03b2 8F3F      		cpi r24,-1
+ 900 03b4 2FEF      		ldi r18,-1
+ 901 03b6 9207      		cpc r25,r18
+ 902 03b8 01F0      		breq .L52
+ 255:../../../../quantum/audio/audio.c **** 				envelope_index++;
+ 903               		.loc 1 255 0
+ 904 03ba 0196      		adiw r24,1
+ 905 03bc 9093 0000 		sts envelope_index+1,r25
+ 906 03c0 8093 0000 		sts envelope_index,r24
+ 907               	.L52:
+ 256:../../../../quantum/audio/audio.c **** 			}
+ 257:../../../../quantum/audio/audio.c **** 			freq = voice_envelope(freq);
+ 908               		.loc 1 257 0
+ 909 03c4 C701      		movw r24,r14
+ 910 03c6 B601      		movw r22,r12
+ 911 03c8 0E94 0000 		call voice_envelope
+ 912               	.LVL56:
+ 258:../../../../quantum/audio/audio.c **** 
+ 259:../../../../quantum/audio/audio.c **** 			TIMER_3_PERIOD = (uint16_t)(((float)F_CPU) / (freq * CPU_PRESCALER));
+ 913               		.loc 1 259 0
+ 914 03cc 20E0      		ldi r18,0
+ 915 03ce 30E0      		ldi r19,0
+ 916 03d0 40E0      		ldi r20,0
+ 917 03d2 51E4      		ldi r21,lo8(65)
+ 918 03d4 0E94 0000 		call __mulsf3
+ 919               	.LVL57:
+ 920 03d8 9B01      		movw r18,r22
+ 921 03da AC01      		movw r20,r24
+ 922 03dc 60E0      		ldi r22,0
+ 923 03de 74E2      		ldi r23,lo8(36)
+ 924 03e0 84E7      		ldi r24,lo8(116)
+ 925 03e2 9BE4      		ldi r25,lo8(75)
+ 926 03e4 0E94 0000 		call __divsf3
+ 927               	.LVL58:
+ 928 03e8 6B01      		movw r12,r22
+ 929 03ea 7C01      		movw r14,r24
+ 930 03ec 0E94 0000 		call __fixunssfsi
+ 931               	.LVL59:
+ 932 03f0 7093 9700 		sts 150+1,r23
+ 933 03f4 6093 9600 		sts 150,r22
+ 260:../../../../quantum/audio/audio.c **** 			TIMER_3_DUTY_CYCLE = (uint16_t)((((float)F_CPU) / (freq * CPU_PRESCALER)) * note_timbre);
+ 934               		.loc 1 260 0
+ 935 03f8 2091 0000 		lds r18,note_timbre
+ 936 03fc 3091 0000 		lds r19,note_timbre+1
+ 937 0400 4091 0000 		lds r20,note_timbre+2
+ 938 0404 5091 0000 		lds r21,note_timbre+3
+ 939 0408 C701      		movw r24,r14
+ 940 040a B601      		movw r22,r12
+ 941 040c 0E94 0000 		call __mulsf3
+ 942               	.LVL60:
+ 943 0410 0E94 0000 		call __fixunssfsi
+ 944               	.LVL61:
+ 945 0414 7093 9900 		sts 152+1,r23
+ 946 0418 6093 9800 		sts 152,r22
+ 947 041c 00C0      		rjmp .L53
+ 948               	.L87:
+ 261:../../../../quantum/audio/audio.c **** 		} else {
+ 262:../../../../quantum/audio/audio.c **** 			TIMER_3_PERIOD = 0;
+ 949               		.loc 1 262 0
+ 950 041e 1092 9700 		sts 150+1,__zero_reg__
+ 951 0422 1092 9600 		sts 150,__zero_reg__
+ 263:../../../../quantum/audio/audio.c **** 			TIMER_3_DUTY_CYCLE = 0;
+ 952               		.loc 1 263 0
+ 953 0426 1092 9900 		sts 152+1,__zero_reg__
+ 954 042a 1092 9800 		sts 152,__zero_reg__
+ 955               	.L53:
+ 264:../../../../quantum/audio/audio.c **** 		}
+ 265:../../../../quantum/audio/audio.c **** 
+ 266:../../../../quantum/audio/audio.c **** 		note_position++;
+ 956               		.loc 1 266 0
+ 957 042e 6091 0000 		lds r22,note_position
+ 958 0432 7091 0000 		lds r23,note_position+1
+ 959 0436 6F5F      		subi r22,-1
+ 960 0438 7F4F      		sbci r23,-1
+ 961 043a 7093 0000 		sts note_position+1,r23
+ 962 043e 6093 0000 		sts note_position,r22
+ 963               	.LVL62:
+ 267:../../../../quantum/audio/audio.c **** 		bool end_of_note = false;
+ 268:../../../../quantum/audio/audio.c **** 		if (TIMER_3_PERIOD > 0) {
+ 964               		.loc 1 268 0
+ 965 0442 2091 9600 		lds r18,150
+ 966 0446 3091 9700 		lds r19,150+1
+ 967 044a 80E0      		ldi r24,0
+ 968 044c 90E0      		ldi r25,0
+ 969 044e 232B      		or r18,r19
+ 970 0450 01F0      		breq .L54
+ 269:../../../../quantum/audio/audio.c **** 			end_of_note = (note_position >= (note_length / TIMER_3_PERIOD * 0xFFFF));
+ 971               		.loc 1 269 0
+ 972 0452 C091 9600 		lds r28,150
+ 973 0456 D091 9700 		lds r29,150+1
+ 974 045a 0E94 0000 		call __floatunsisf
+ 975               	.LVL63:
+ 976 045e 6B01      		movw r12,r22
+ 977 0460 7C01      		movw r14,r24
+ 978 0462 BE01      		movw r22,r28
+ 979 0464 80E0      		ldi r24,0
+ 980 0466 90E0      		ldi r25,0
+ 981 0468 0E94 0000 		call __floatunsisf
+ 982               	.LVL64:
+ 983 046c 9B01      		movw r18,r22
+ 984 046e AC01      		movw r20,r24
+ 985 0470 6091 0000 		lds r22,note_length
+ 986 0474 7091 0000 		lds r23,note_length+1
+ 987 0478 8091 0000 		lds r24,note_length+2
+ 988 047c 9091 0000 		lds r25,note_length+3
+ 989 0480 0E94 0000 		call __divsf3
+ 990               	.LVL65:
+ 991 0484 20E0      		ldi r18,0
+ 992 0486 3FEF      		ldi r19,lo8(-1)
+ 993 0488 4FE7      		ldi r20,lo8(127)
+ 994 048a 57E4      		ldi r21,lo8(71)
+ 995 048c 00C0      		rjmp .L89
+ 996               	.L54:
+ 270:../../../../quantum/audio/audio.c **** 		} else {
+ 271:../../../../quantum/audio/audio.c **** 			end_of_note = (note_position >= (note_length * 0x7FF));
+ 997               		.loc 1 271 0
+ 998 048e 0E94 0000 		call __floatunsisf
+ 999               	.LVL66:
+ 1000 0492 6B01      		movw r12,r22
+ 1001 0494 7C01      		movw r14,r24
+ 1002 0496 20E0      		ldi r18,0
+ 1003 0498 30EE      		ldi r19,lo8(-32)
+ 1004 049a 4FEF      		ldi r20,lo8(-1)
+ 1005 049c 54E4      		ldi r21,lo8(68)
+ 1006 049e 6091 0000 		lds r22,note_length
+ 1007 04a2 7091 0000 		lds r23,note_length+1
+ 1008 04a6 8091 0000 		lds r24,note_length+2
+ 1009 04aa 9091 0000 		lds r25,note_length+3
+ 1010               	.L89:
+ 1011 04ae 0E94 0000 		call __mulsf3
+ 1012               	.LVL67:
+ 1013 04b2 9B01      		movw r18,r22
+ 1014 04b4 AC01      		movw r20,r24
+ 1015 04b6 C701      		movw r24,r14
+ 1016 04b8 B601      		movw r22,r12
+ 1017 04ba 0E94 0000 		call __gesf2
+ 1018               	.LVL68:
+ 1019 04be 87FD      		sbrc r24,7
+ 1020 04c0 00C0      		rjmp .L49
+ 272:../../../../quantum/audio/audio.c **** 		}
+ 273:../../../../quantum/audio/audio.c **** 
+ 274:../../../../quantum/audio/audio.c **** 		if (end_of_note) {
+ 275:../../../../quantum/audio/audio.c **** 			current_note++;
+ 1021               		.loc 1 275 0
+ 1022 04c2 8091 0000 		lds r24,current_note
+ 1023 04c6 8F5F      		subi r24,lo8(-(1))
+ 1024 04c8 8093 0000 		sts current_note,r24
+ 276:../../../../quantum/audio/audio.c **** 			if (current_note >= notes_count) {
+ 1025               		.loc 1 276 0
+ 1026 04cc 90E0      		ldi r25,0
+ 1027 04ce 2091 0000 		lds r18,notes_count
+ 1028 04d2 3091 0000 		lds r19,notes_count+1
+ 1029 04d6 8217      		cp r24,r18
+ 1030 04d8 9307      		cpc r25,r19
+ 1031 04da 00F0      		brlo .L59
+ 277:../../../../quantum/audio/audio.c **** 				if (notes_repeat) {
+ 1032               		.loc 1 277 0
+ 1033 04dc 8091 0000 		lds r24,notes_repeat
+ 1034 04e0 8823      		tst r24
+ 1035 04e2 01F0      		breq .L60
+ 278:../../../../quantum/audio/audio.c **** 					current_note = 0;
+ 1036               		.loc 1 278 0
+ 1037 04e4 1092 0000 		sts current_note,__zero_reg__
+ 1038 04e8 00C0      		rjmp .L59
+ 1039               	.L60:
+ 279:../../../../quantum/audio/audio.c **** 				} else {
+ 280:../../../../quantum/audio/audio.c **** 					DISABLE_AUDIO_COUNTER_3_ISR;
+ 1040               		.loc 1 280 0
+ 1041 04ea 8091 7100 		lds r24,113
+ 1042 04ee 8D7F      		andi r24,lo8(-3)
+ 1043 04f0 8093 7100 		sts 113,r24
+ 281:../../../../quantum/audio/audio.c **** 					DISABLE_AUDIO_COUNTER_3_OUTPUT;
+ 1044               		.loc 1 281 0
+ 1045 04f4 8091 9000 		lds r24,144
+ 1046 04f8 8F73      		andi r24,lo8(63)
+ 1047 04fa 8093 9000 		sts 144,r24
+ 282:../../../../quantum/audio/audio.c **** 					playing_notes = false;
+ 1048               		.loc 1 282 0
+ 1049 04fe 1092 0000 		sts playing_notes,__zero_reg__
+ 283:../../../../quantum/audio/audio.c **** 					return;
+ 1050               		.loc 1 283 0
+ 1051 0502 00C0      		rjmp .L28
+ 1052               	.L59:
+ 284:../../../../quantum/audio/audio.c **** 				}
+ 285:../../../../quantum/audio/audio.c **** 			}
+ 286:../../../../quantum/audio/audio.c **** 			if (!note_resting && (notes_rest > 0)) {
+ 1053               		.loc 1 286 0
+ 1054 0504 8091 0000 		lds r24,note_resting
+ 1055 0508 C091 0000 		lds r28,current_note
+ 1056 050c 8111      		cpse r24,__zero_reg__
+ 1057 050e 00C0      		rjmp .L62
+ 1058               		.loc 1 286 0 is_stmt 0 discriminator 1
+ 1059 0510 C090 0000 		lds r12,notes_rest
+ 1060 0514 D090 0000 		lds r13,notes_rest+1
+ 1061 0518 E090 0000 		lds r14,notes_rest+2
+ 1062 051c F090 0000 		lds r15,notes_rest+3
+ 1063 0520 20E0      		ldi r18,0
+ 1064 0522 30E0      		ldi r19,0
+ 1065 0524 A901      		movw r20,r18
+ 1066 0526 C701      		movw r24,r14
+ 1067 0528 B601      		movw r22,r12
+ 1068 052a 0E94 0000 		call __gtsf2
+ 1069               	.LVL69:
+ 1070 052e 1816      		cp __zero_reg__,r24
+ 1071 0530 04F4      		brge .L62
+ 287:../../../../quantum/audio/audio.c **** 				note_resting = true;
+ 1072               		.loc 1 287 0 is_stmt 1
+ 1073 0532 81E0      		ldi r24,lo8(1)
+ 1074 0534 8093 0000 		sts note_resting,r24
+ 288:../../../../quantum/audio/audio.c **** 				note_frequency = 0;
+ 1075               		.loc 1 288 0
+ 1076 0538 1092 0000 		sts note_frequency,__zero_reg__
+ 1077 053c 1092 0000 		sts note_frequency+1,__zero_reg__
+ 1078 0540 1092 0000 		sts note_frequency+2,__zero_reg__
+ 1079 0544 1092 0000 		sts note_frequency+3,__zero_reg__
+ 289:../../../../quantum/audio/audio.c **** 				note_length = notes_rest;
+ 1080               		.loc 1 289 0
+ 1081 0548 C092 0000 		sts note_length,r12
+ 1082 054c D092 0000 		sts note_length+1,r13
+ 1083 0550 E092 0000 		sts note_length+2,r14
+ 1084 0554 F092 0000 		sts note_length+3,r15
+ 290:../../../../quantum/audio/audio.c **** 				current_note--;
+ 1085               		.loc 1 290 0
+ 1086 0558 C150      		subi r28,lo8(-(-1))
+ 1087 055a C093 0000 		sts current_note,r28
+ 1088 055e 00C0      		rjmp .L64
+ 1089               	.L62:
+ 291:../../../../quantum/audio/audio.c **** 			} else {
+ 292:../../../../quantum/audio/audio.c **** 				note_resting = false;
+ 1090               		.loc 1 292 0
+ 1091 0560 1092 0000 		sts note_resting,__zero_reg__
+ 293:../../../../quantum/audio/audio.c **** 				envelope_index = 0;
+ 1092               		.loc 1 293 0
+ 1093 0564 1092 0000 		sts envelope_index+1,__zero_reg__
+ 1094 0568 1092 0000 		sts envelope_index,__zero_reg__
+ 294:../../../../quantum/audio/audio.c **** 				note_frequency = (*notes_pointer)[current_note][0];
+ 1095               		.loc 1 294 0
+ 1096 056c E091 0000 		lds r30,notes_pointer
+ 1097 0570 F091 0000 		lds r31,notes_pointer+1
+ 1098 0574 48E0      		ldi r20,lo8(8)
+ 1099 0576 C49F      		mul r28,r20
+ 1100 0578 E00D      		add r30,r0
+ 1101 057a F11D      		adc r31,r1
+ 1102 057c 1124      		clr __zero_reg__
+ 1103 057e 8081      		ld r24,Z
+ 1104 0580 9181      		ldd r25,Z+1
+ 1105 0582 A281      		ldd r26,Z+2
+ 1106 0584 B381      		ldd r27,Z+3
+ 1107 0586 8093 0000 		sts note_frequency,r24
+ 1108 058a 9093 0000 		sts note_frequency+1,r25
+ 1109 058e A093 0000 		sts note_frequency+2,r26
+ 1110 0592 B093 0000 		sts note_frequency+3,r27
+ 295:../../../../quantum/audio/audio.c **** 				note_length = ((*notes_pointer)[current_note][1] / 4) * (((float)note_tempo) / 100);
+ 1111               		.loc 1 295 0
+ 1112 0596 20E0      		ldi r18,0
+ 1113 0598 30E0      		ldi r19,0
+ 1114 059a 40E8      		ldi r20,lo8(-128)
+ 1115 059c 5EE3      		ldi r21,lo8(62)
+ 1116 059e 6481      		ldd r22,Z+4
+ 1117 05a0 7581      		ldd r23,Z+5
+ 1118 05a2 8681      		ldd r24,Z+6
+ 1119 05a4 9781      		ldd r25,Z+7
+ 1120 05a6 0E94 0000 		call __mulsf3
+ 1121               	.LVL70:
+ 1122 05aa 6B01      		movw r12,r22
+ 1123 05ac 7C01      		movw r14,r24
+ 1124 05ae 8091 0000 		lds r24,note_tempo
+ 1125 05b2 682F      		mov r22,r24
+ 1126 05b4 70E0      		ldi r23,0
+ 1127 05b6 80E0      		ldi r24,0
+ 1128 05b8 90E0      		ldi r25,0
+ 1129 05ba 0E94 0000 		call __floatunsisf
+ 1130               	.LVL71:
+ 1131 05be 20E0      		ldi r18,0
+ 1132 05c0 30E0      		ldi r19,0
+ 1133 05c2 48EC      		ldi r20,lo8(-56)
+ 1134 05c4 52E4      		ldi r21,lo8(66)
+ 1135 05c6 0E94 0000 		call __divsf3
+ 1136               	.LVL72:
+ 1137 05ca 9B01      		movw r18,r22
+ 1138 05cc AC01      		movw r20,r24
+ 1139 05ce C701      		movw r24,r14
+ 1140 05d0 B601      		movw r22,r12
+ 1141 05d2 0E94 0000 		call __mulsf3
+ 1142               	.LVL73:
+ 1143 05d6 6093 0000 		sts note_length,r22
+ 1144 05da 7093 0000 		sts note_length+1,r23
+ 1145 05de 8093 0000 		sts note_length+2,r24
+ 1146 05e2 9093 0000 		sts note_length+3,r25
+ 1147               	.L64:
+ 296:../../../../quantum/audio/audio.c **** 			}
+ 297:../../../../quantum/audio/audio.c **** 
+ 298:../../../../quantum/audio/audio.c **** 			note_position = 0;
+ 1148               		.loc 1 298 0
+ 1149 05e6 1092 0000 		sts note_position+1,__zero_reg__
+ 1150 05ea 1092 0000 		sts note_position,__zero_reg__
+ 1151               	.LVL74:
+ 1152               	.L49:
+ 1153               	.LBE5:
+ 299:../../../../quantum/audio/audio.c **** 		}
+ 300:../../../../quantum/audio/audio.c **** 	}
+ 301:../../../../quantum/audio/audio.c **** 
+ 302:../../../../quantum/audio/audio.c **** 	if (!audio_config.enable) {
+ 1154               		.loc 1 302 0
+ 1155 05ee 8091 0000 		lds r24,audio_config
+ 1156 05f2 80FD      		sbrc r24,0
+ 1157 05f4 00C0      		rjmp .L28
+ 303:../../../../quantum/audio/audio.c **** 		playing_notes = false;
+ 1158               		.loc 1 303 0
+ 1159 05f6 1092 0000 		sts playing_notes,__zero_reg__
+ 304:../../../../quantum/audio/audio.c **** 		playing_note = false;
+ 1160               		.loc 1 304 0
+ 1161 05fa 1092 0000 		sts playing_note,__zero_reg__
+ 1162               	.L28:
+ 1163               	/* epilogue start */
+ 305:../../../../quantum/audio/audio.c **** 	}
+ 306:../../../../quantum/audio/audio.c **** }
+ 1164               		.loc 1 306 0
+ 1165 05fe FF91      		pop r31
+ 1166 0600 EF91      		pop r30
+ 1167 0602 DF91      		pop r29
+ 1168 0604 CF91      		pop r28
+ 1169 0606 BF91      		pop r27
+ 1170 0608 AF91      		pop r26
+ 1171 060a 9F91      		pop r25
+ 1172 060c 8F91      		pop r24
+ 1173 060e 7F91      		pop r23
+ 1174 0610 6F91      		pop r22
+ 1175 0612 5F91      		pop r21
+ 1176 0614 4F91      		pop r20
+ 1177 0616 3F91      		pop r19
+ 1178 0618 2F91      		pop r18
+ 1179 061a FF90      		pop r15
+ 1180 061c EF90      		pop r14
+ 1181 061e DF90      		pop r13
+ 1182 0620 CF90      		pop r12
+ 1183 0622 BF90      		pop r11
+ 1184 0624 AF90      		pop r10
+ 1185 0626 9F90      		pop r9
+ 1186 0628 8F90      		pop r8
+ 1187 062a 7F90      		pop r7
+ 1188 062c 6F90      		pop r6
+ 1189 062e 5F90      		pop r5
+ 1190 0630 4F90      		pop r4
+ 1191 0632 0F90      		pop r0
+ 1192 0634 0FBE      		out __SREG__,r0
+ 1193 0636 0F90      		pop r0
+ 1194 0638 1F90      		pop r1
+ 1195 063a 1895      		reti
+ 1196               		.cfi_endproc
+ 1197               	.LFE110:
+ 1199               		.section	.text.play_note,"ax",@progbits
+ 1200               	.global	play_note
+ 1202               	play_note:
+ 1203               	.LFB111:
+ 307:../../../../quantum/audio/audio.c **** 
+ 308:../../../../quantum/audio/audio.c **** void play_note(float freq, int vol) {
+ 1204               		.loc 1 308 0
+ 1205               		.cfi_startproc
+ 1206               	.LVL75:
+ 1207 0000 CF92      		push r12
+ 1208               	.LCFI36:
+ 1209               		.cfi_def_cfa_offset 3
+ 1210               		.cfi_offset 12, -2
+ 1211 0002 DF92      		push r13
+ 1212               	.LCFI37:
+ 1213               		.cfi_def_cfa_offset 4
+ 1214               		.cfi_offset 13, -3
+ 1215 0004 EF92      		push r14
+ 1216               	.LCFI38:
+ 1217               		.cfi_def_cfa_offset 5
+ 1218               		.cfi_offset 14, -4
+ 1219 0006 FF92      		push r15
+ 1220               	.LCFI39:
+ 1221               		.cfi_def_cfa_offset 6
+ 1222               		.cfi_offset 15, -5
+ 1223 0008 CF93      		push r28
+ 1224               	.LCFI40:
+ 1225               		.cfi_def_cfa_offset 7
+ 1226               		.cfi_offset 28, -6
+ 1227 000a DF93      		push r29
+ 1228               	.LCFI41:
+ 1229               		.cfi_def_cfa_offset 8
+ 1230               		.cfi_offset 29, -7
+ 1231               	/* prologue: function */
+ 1232               	/* frame size = 0 */
+ 1233               	/* stack size = 6 */
+ 1234               	.L__stack_usage = 6
+ 1235 000c 6B01      		movw r12,r22
+ 1236 000e 7C01      		movw r14,r24
+ 1237 0010 EA01      		movw r28,r20
+ 309:../../../../quantum/audio/audio.c **** 
+ 310:../../../../quantum/audio/audio.c ****     if (!audio_initialized) {
+ 1238               		.loc 1 310 0
+ 1239 0012 8091 0000 		lds r24,audio_initialized
+ 1240 0016 8111      		cpse r24,__zero_reg__
+ 1241 0018 00C0      		rjmp .L91
+ 311:../../../../quantum/audio/audio.c ****         audio_init();
+ 1242               		.loc 1 311 0
+ 1243 001a 0E94 0000 		call audio_init
+ 1244               	.LVL76:
+ 1245               	.L91:
+ 312:../../../../quantum/audio/audio.c ****     }
+ 313:../../../../quantum/audio/audio.c **** 
+ 314:../../../../quantum/audio/audio.c **** 	if (audio_config.enable && voices < 8) {
+ 1246               		.loc 1 314 0
+ 1247 001e 8091 0000 		lds r24,audio_config
+ 1248 0022 80FF      		sbrs r24,0
+ 1249 0024 00C0      		rjmp .L90
+ 1250               		.loc 1 314 0 is_stmt 0 discriminator 1
+ 1251 0026 8091 0000 		lds r24,voices
+ 1252 002a 9091 0000 		lds r25,voices+1
+ 1253 002e 0897      		sbiw r24,8
+ 1254 0030 04F0      		brlt .+2
+ 1255 0032 00C0      		rjmp .L90
+ 315:../../../../quantum/audio/audio.c **** 	    DISABLE_AUDIO_COUNTER_3_ISR;
+ 1256               		.loc 1 315 0 is_stmt 1
+ 1257 0034 8091 7100 		lds r24,113
+ 1258 0038 8D7F      		andi r24,lo8(-3)
+ 1259 003a 8093 7100 		sts 113,r24
+ 316:../../../../quantum/audio/audio.c **** 
+ 317:../../../../quantum/audio/audio.c **** 	    // Cancel notes if notes are playing
+ 318:../../../../quantum/audio/audio.c **** 	    if (playing_notes)
+ 1260               		.loc 1 318 0
+ 1261 003e 8091 0000 		lds r24,playing_notes
+ 1262 0042 8111      		cpse r24,__zero_reg__
+ 319:../../../../quantum/audio/audio.c **** 	        stop_all_notes();
+ 1263               		.loc 1 319 0
+ 1264 0044 0E94 0000 		call stop_all_notes
+ 1265               	.LVL77:
+ 1266               	.L93:
+ 320:../../../../quantum/audio/audio.c **** 
+ 321:../../../../quantum/audio/audio.c **** 	    playing_note = true;
+ 1267               		.loc 1 321 0
+ 1268 0048 81E0      		ldi r24,lo8(1)
+ 1269 004a 8093 0000 		sts playing_note,r24
+ 322:../../../../quantum/audio/audio.c **** 
+ 323:../../../../quantum/audio/audio.c **** 	    envelope_index = 0;
+ 1270               		.loc 1 323 0
+ 1271 004e 1092 0000 		sts envelope_index+1,__zero_reg__
+ 1272 0052 1092 0000 		sts envelope_index,__zero_reg__
+ 324:../../../../quantum/audio/audio.c **** 
+ 325:../../../../quantum/audio/audio.c **** 	    if (freq > 0) {
+ 1273               		.loc 1 325 0
+ 1274 0056 20E0      		ldi r18,0
+ 1275 0058 30E0      		ldi r19,0
+ 1276 005a A901      		movw r20,r18
+ 1277 005c C701      		movw r24,r14
+ 1278 005e B601      		movw r22,r12
+ 1279 0060 0E94 0000 		call __gtsf2
+ 1280               	.LVL78:
+ 1281 0064 1816      		cp __zero_reg__,r24
+ 1282 0066 04F4      		brge .L94
+ 326:../../../../quantum/audio/audio.c **** 	        frequencies[voices] = freq;
+ 1283               		.loc 1 326 0
+ 1284 0068 8091 0000 		lds r24,voices
+ 1285 006c 9091 0000 		lds r25,voices+1
+ 1286 0070 FC01      		movw r30,r24
+ 1287 0072 EE0F      		lsl r30
+ 1288 0074 FF1F      		rol r31
+ 1289 0076 EE0F      		lsl r30
+ 1290 0078 FF1F      		rol r31
+ 1291 007a E050      		subi r30,lo8(-(frequencies))
+ 1292 007c F040      		sbci r31,hi8(-(frequencies))
+ 1293 007e C082      		st Z,r12
+ 1294 0080 D182      		std Z+1,r13
+ 1295 0082 E282      		std Z+2,r14
+ 1296 0084 F382      		std Z+3,r15
+ 327:../../../../quantum/audio/audio.c **** 	        volumes[voices] = vol;
+ 1297               		.loc 1 327 0
+ 1298 0086 FC01      		movw r30,r24
+ 1299 0088 EE0F      		lsl r30
+ 1300 008a FF1F      		rol r31
+ 1301 008c E050      		subi r30,lo8(-(volumes))
+ 1302 008e F040      		sbci r31,hi8(-(volumes))
+ 1303 0090 D183      		std Z+1,r29
+ 1304 0092 C083      		st Z,r28
+ 328:../../../../quantum/audio/audio.c **** 	        voices++;
+ 1305               		.loc 1 328 0
+ 1306 0094 0196      		adiw r24,1
+ 1307 0096 9093 0000 		sts voices+1,r25
+ 1308 009a 8093 0000 		sts voices,r24
+ 1309               	.L94:
+ 329:../../../../quantum/audio/audio.c **** 	    }
+ 330:../../../../quantum/audio/audio.c **** 
+ 331:../../../../quantum/audio/audio.c ****         ENABLE_AUDIO_COUNTER_3_ISR;
+ 1310               		.loc 1 331 0
+ 1311 009e 8091 7100 		lds r24,113
+ 1312 00a2 8260      		ori r24,lo8(2)
+ 1313 00a4 8093 7100 		sts 113,r24
+ 332:../../../../quantum/audio/audio.c ****         ENABLE_AUDIO_COUNTER_3_OUTPUT;
+ 1314               		.loc 1 332 0
+ 1315 00a8 8091 9000 		lds r24,144
+ 1316 00ac 8068      		ori r24,lo8(-128)
+ 1317 00ae 8093 9000 		sts 144,r24
+ 1318               	.L90:
+ 1319               	/* epilogue start */
+ 333:../../../../quantum/audio/audio.c **** 	}
+ 334:../../../../quantum/audio/audio.c **** 
+ 335:../../../../quantum/audio/audio.c **** }
+ 1320               		.loc 1 335 0
+ 1321 00b2 DF91      		pop r29
+ 1322 00b4 CF91      		pop r28
+ 1323               	.LVL79:
+ 1324 00b6 FF90      		pop r15
+ 1325 00b8 EF90      		pop r14
+ 1326 00ba DF90      		pop r13
+ 1327 00bc CF90      		pop r12
+ 1328               	.LVL80:
+ 1329 00be 0895      		ret
+ 1330               		.cfi_endproc
+ 1331               	.LFE111:
+ 1333               		.section	.text.play_notes,"ax",@progbits
+ 1334               	.global	play_notes
+ 1336               	play_notes:
+ 1337               	.LFB112:
+ 336:../../../../quantum/audio/audio.c **** 
+ 337:../../../../quantum/audio/audio.c **** void play_notes(float (*np)[][2], uint16_t n_count, bool n_repeat, float n_rest)
+ 338:../../../../quantum/audio/audio.c **** {
+ 1338               		.loc 1 338 0
+ 1339               		.cfi_startproc
+ 1340               	.LVL81:
+ 1341 0000 8F92      		push r8
+ 1342               	.LCFI42:
+ 1343               		.cfi_def_cfa_offset 3
+ 1344               		.cfi_offset 8, -2
+ 1345 0002 9F92      		push r9
+ 1346               	.LCFI43:
+ 1347               		.cfi_def_cfa_offset 4
+ 1348               		.cfi_offset 9, -3
+ 1349 0004 AF92      		push r10
+ 1350               	.LCFI44:
+ 1351               		.cfi_def_cfa_offset 5
+ 1352               		.cfi_offset 10, -4
+ 1353 0006 BF92      		push r11
+ 1354               	.LCFI45:
+ 1355               		.cfi_def_cfa_offset 6
+ 1356               		.cfi_offset 11, -5
+ 1357 0008 CF92      		push r12
+ 1358               	.LCFI46:
+ 1359               		.cfi_def_cfa_offset 7
+ 1360               		.cfi_offset 12, -6
+ 1361 000a DF92      		push r13
+ 1362               	.LCFI47:
+ 1363               		.cfi_def_cfa_offset 8
+ 1364               		.cfi_offset 13, -7
+ 1365 000c EF92      		push r14
+ 1366               	.LCFI48:
+ 1367               		.cfi_def_cfa_offset 9
+ 1368               		.cfi_offset 14, -8
+ 1369 000e FF92      		push r15
+ 1370               	.LCFI49:
+ 1371               		.cfi_def_cfa_offset 10
+ 1372               		.cfi_offset 15, -9
+ 1373 0010 0F93      		push r16
+ 1374               	.LCFI50:
+ 1375               		.cfi_def_cfa_offset 11
+ 1376               		.cfi_offset 16, -10
+ 1377 0012 1F93      		push r17
+ 1378               	.LCFI51:
+ 1379               		.cfi_def_cfa_offset 12
+ 1380               		.cfi_offset 17, -11
+ 1381 0014 CF93      		push r28
+ 1382               	.LCFI52:
+ 1383               		.cfi_def_cfa_offset 13
+ 1384               		.cfi_offset 28, -12
+ 1385 0016 DF93      		push r29
+ 1386               	.LCFI53:
+ 1387               		.cfi_def_cfa_offset 14
+ 1388               		.cfi_offset 29, -13
+ 1389               	/* prologue: function */
+ 1390               	/* frame size = 0 */
+ 1391               	/* stack size = 12 */
+ 1392               	.L__stack_usage = 12
+ 1393 0018 EC01      		movw r28,r24
+ 1394 001a 7B01      		movw r14,r22
+ 1395 001c D42E      		mov r13,r20
+ 1396 001e 4801      		movw r8,r16
+ 1397 0020 5901      		movw r10,r18
+ 339:../../../../quantum/audio/audio.c **** 
+ 340:../../../../quantum/audio/audio.c ****     if (!audio_initialized) {
+ 1398               		.loc 1 340 0
+ 1399 0022 8091 0000 		lds r24,audio_initialized
+ 1400               	.LVL82:
+ 1401 0026 8111      		cpse r24,__zero_reg__
+ 1402 0028 00C0      		rjmp .L104
+ 341:../../../../quantum/audio/audio.c ****         audio_init();
+ 1403               		.loc 1 341 0
+ 1404 002a 0E94 0000 		call audio_init
+ 1405               	.LVL83:
+ 1406               	.L104:
+ 342:../../../../quantum/audio/audio.c ****     }
+ 343:../../../../quantum/audio/audio.c **** 
+ 344:../../../../quantum/audio/audio.c **** 	if (audio_config.enable) {
+ 1407               		.loc 1 344 0
+ 1408 002e 8091 0000 		lds r24,audio_config
+ 1409 0032 80FF      		sbrs r24,0
+ 1410 0034 00C0      		rjmp .L103
+ 345:../../../../quantum/audio/audio.c **** 
+ 346:../../../../quantum/audio/audio.c **** 	    DISABLE_AUDIO_COUNTER_3_ISR;
+ 1411               		.loc 1 346 0
+ 1412 0036 8091 7100 		lds r24,113
+ 1413 003a 8D7F      		andi r24,lo8(-3)
+ 1414 003c 8093 7100 		sts 113,r24
+ 347:../../../../quantum/audio/audio.c **** 
+ 348:../../../../quantum/audio/audio.c **** 		// Cancel note if a note is playing
+ 349:../../../../quantum/audio/audio.c **** 	    if (playing_note)
+ 1415               		.loc 1 349 0
+ 1416 0040 8091 0000 		lds r24,playing_note
+ 1417 0044 8111      		cpse r24,__zero_reg__
+ 350:../../../../quantum/audio/audio.c **** 	        stop_all_notes();
+ 1418               		.loc 1 350 0
+ 1419 0046 0E94 0000 		call stop_all_notes
+ 1420               	.LVL84:
+ 1421               	.L106:
+ 351:../../../../quantum/audio/audio.c **** 
+ 352:../../../../quantum/audio/audio.c **** 	    playing_notes = true;
+ 1422               		.loc 1 352 0
+ 1423 004a 81E0      		ldi r24,lo8(1)
+ 1424 004c 8093 0000 		sts playing_notes,r24
+ 353:../../../../quantum/audio/audio.c **** 
+ 354:../../../../quantum/audio/audio.c **** 	    notes_pointer = np;
+ 1425               		.loc 1 354 0
+ 1426 0050 D093 0000 		sts notes_pointer+1,r29
+ 1427 0054 C093 0000 		sts notes_pointer,r28
+ 355:../../../../quantum/audio/audio.c **** 	    notes_count = n_count;
+ 1428               		.loc 1 355 0
+ 1429 0058 F092 0000 		sts notes_count+1,r15
+ 1430 005c E092 0000 		sts notes_count,r14
+ 356:../../../../quantum/audio/audio.c **** 	    notes_repeat = n_repeat;
+ 1431               		.loc 1 356 0
+ 1432 0060 D092 0000 		sts notes_repeat,r13
+ 357:../../../../quantum/audio/audio.c **** 	    notes_rest = n_rest;
+ 1433               		.loc 1 357 0
+ 1434 0064 8092 0000 		sts notes_rest,r8
+ 1435 0068 9092 0000 		sts notes_rest+1,r9
+ 1436 006c A092 0000 		sts notes_rest+2,r10
+ 1437 0070 B092 0000 		sts notes_rest+3,r11
+ 358:../../../../quantum/audio/audio.c **** 
+ 359:../../../../quantum/audio/audio.c **** 	    place = 0;
+ 1438               		.loc 1 359 0
+ 1439 0074 1092 0000 		sts place,__zero_reg__
+ 1440 0078 1092 0000 		sts place+1,__zero_reg__
+ 1441 007c 1092 0000 		sts place+2,__zero_reg__
+ 1442 0080 1092 0000 		sts place+3,__zero_reg__
+ 360:../../../../quantum/audio/audio.c **** 	    current_note = 0;
+ 1443               		.loc 1 360 0
+ 1444 0084 1092 0000 		sts current_note,__zero_reg__
+ 361:../../../../quantum/audio/audio.c **** 
+ 362:../../../../quantum/audio/audio.c ****         note_frequency = (*notes_pointer)[current_note][0];
+ 1445               		.loc 1 362 0
+ 1446 0088 8881      		ld r24,Y
+ 1447 008a 9981      		ldd r25,Y+1
+ 1448 008c AA81      		ldd r26,Y+2
+ 1449 008e BB81      		ldd r27,Y+3
+ 1450 0090 8093 0000 		sts note_frequency,r24
+ 1451 0094 9093 0000 		sts note_frequency+1,r25
+ 1452 0098 A093 0000 		sts note_frequency+2,r26
+ 1453 009c B093 0000 		sts note_frequency+3,r27
+ 363:../../../../quantum/audio/audio.c ****         note_length = ((*notes_pointer)[current_note][1] / 4) * (((float)note_tempo) / 100);
+ 1454               		.loc 1 363 0
+ 1455 00a0 20E0      		ldi r18,0
+ 1456 00a2 30E0      		ldi r19,0
+ 1457 00a4 40E8      		ldi r20,lo8(-128)
+ 1458 00a6 5EE3      		ldi r21,lo8(62)
+ 1459 00a8 6C81      		ldd r22,Y+4
+ 1460 00aa 7D81      		ldd r23,Y+5
+ 1461 00ac 8E81      		ldd r24,Y+6
+ 1462 00ae 9F81      		ldd r25,Y+7
+ 1463 00b0 0E94 0000 		call __mulsf3
+ 1464               	.LVL85:
+ 1465 00b4 6B01      		movw r12,r22
+ 1466 00b6 7C01      		movw r14,r24
+ 1467 00b8 8091 0000 		lds r24,note_tempo
+ 1468 00bc 682F      		mov r22,r24
+ 1469 00be 70E0      		ldi r23,0
+ 1470 00c0 80E0      		ldi r24,0
+ 1471 00c2 90E0      		ldi r25,0
+ 1472 00c4 0E94 0000 		call __floatunsisf
+ 1473               	.LVL86:
+ 1474 00c8 20E0      		ldi r18,0
+ 1475 00ca 30E0      		ldi r19,0
+ 1476 00cc 48EC      		ldi r20,lo8(-56)
+ 1477 00ce 52E4      		ldi r21,lo8(66)
+ 1478 00d0 0E94 0000 		call __divsf3
+ 1479               	.LVL87:
+ 1480 00d4 9B01      		movw r18,r22
+ 1481 00d6 AC01      		movw r20,r24
+ 1482 00d8 C701      		movw r24,r14
+ 1483 00da B601      		movw r22,r12
+ 1484 00dc 0E94 0000 		call __mulsf3
+ 1485               	.LVL88:
+ 1486 00e0 6093 0000 		sts note_length,r22
+ 1487 00e4 7093 0000 		sts note_length+1,r23
+ 1488 00e8 8093 0000 		sts note_length+2,r24
+ 1489 00ec 9093 0000 		sts note_length+3,r25
+ 364:../../../../quantum/audio/audio.c **** 	    note_position = 0;
+ 1490               		.loc 1 364 0
+ 1491 00f0 1092 0000 		sts note_position+1,__zero_reg__
+ 1492 00f4 1092 0000 		sts note_position,__zero_reg__
+ 365:../../../../quantum/audio/audio.c **** 
+ 366:../../../../quantum/audio/audio.c **** 
+ 367:../../../../quantum/audio/audio.c ****         ENABLE_AUDIO_COUNTER_3_ISR;
+ 1493               		.loc 1 367 0
+ 1494 00f8 8091 7100 		lds r24,113
+ 1495 00fc 8260      		ori r24,lo8(2)
+ 1496 00fe 8093 7100 		sts 113,r24
+ 368:../../../../quantum/audio/audio.c ****         ENABLE_AUDIO_COUNTER_3_OUTPUT;
+ 1497               		.loc 1 368 0
+ 1498 0102 8091 9000 		lds r24,144
+ 1499 0106 8068      		ori r24,lo8(-128)
+ 1500 0108 8093 9000 		sts 144,r24
+ 1501               	.LVL89:
+ 1502               	.L103:
+ 1503               	/* epilogue start */
+ 369:../../../../quantum/audio/audio.c **** 	}
+ 370:../../../../quantum/audio/audio.c **** 
+ 371:../../../../quantum/audio/audio.c **** }
+ 1504               		.loc 1 371 0
+ 1505 010c DF91      		pop r29
+ 1506 010e CF91      		pop r28
+ 1507               	.LVL90:
+ 1508 0110 1F91      		pop r17
+ 1509 0112 0F91      		pop r16
+ 1510 0114 FF90      		pop r15
+ 1511 0116 EF90      		pop r14
+ 1512               	.LVL91:
+ 1513 0118 DF90      		pop r13
+ 1514               	.LVL92:
+ 1515 011a CF90      		pop r12
+ 1516 011c BF90      		pop r11
+ 1517 011e AF90      		pop r10
+ 1518 0120 9F90      		pop r9
+ 1519 0122 8F90      		pop r8
+ 1520               	.LVL93:
+ 1521 0124 0895      		ret
+ 1522               		.cfi_endproc
+ 1523               	.LFE112:
+ 1525               		.section	.text.is_playing_notes,"ax",@progbits
+ 1526               	.global	is_playing_notes
+ 1528               	is_playing_notes:
+ 1529               	.LFB113:
+ 372:../../../../quantum/audio/audio.c **** 
+ 373:../../../../quantum/audio/audio.c **** bool is_playing_notes(void) {
+ 1530               		.loc 1 373 0
+ 1531               		.cfi_startproc
+ 1532               	/* prologue: function */
+ 1533               	/* frame size = 0 */
+ 1534               	/* stack size = 0 */
+ 1535               	.L__stack_usage = 0
+ 374:../../../../quantum/audio/audio.c **** 	return playing_notes;
+ 375:../../../../quantum/audio/audio.c **** }
+ 1536               		.loc 1 375 0
+ 1537 0000 8091 0000 		lds r24,playing_notes
+ 1538 0004 0895      		ret
+ 1539               		.cfi_endproc
+ 1540               	.LFE113:
+ 1542               		.section	.text.is_audio_on,"ax",@progbits
+ 1543               	.global	is_audio_on
+ 1545               	is_audio_on:
+ 1546               	.LFB114:
+ 376:../../../../quantum/audio/audio.c **** 
+ 377:../../../../quantum/audio/audio.c **** bool is_audio_on(void) {
+ 1547               		.loc 1 377 0
+ 1548               		.cfi_startproc
+ 1549               	/* prologue: function */
+ 1550               	/* frame size = 0 */
+ 1551               	/* stack size = 0 */
+ 1552               	.L__stack_usage = 0
+ 378:../../../../quantum/audio/audio.c ****     return (audio_config.enable != 0);
+ 1553               		.loc 1 378 0
+ 1554 0000 8091 0000 		lds r24,audio_config
+ 379:../../../../quantum/audio/audio.c **** }
+ 1555               		.loc 1 379 0
+ 1556 0004 8170      		andi r24,lo8(1)
+ 1557 0006 0895      		ret
+ 1558               		.cfi_endproc
+ 1559               	.LFE114:
+ 1561               		.section	.text.audio_toggle,"ax",@progbits
+ 1562               	.global	audio_toggle
+ 1564               	audio_toggle:
+ 1565               	.LFB115:
+ 380:../../../../quantum/audio/audio.c **** 
+ 381:../../../../quantum/audio/audio.c **** void audio_toggle(void) {
+ 1566               		.loc 1 381 0
+ 1567               		.cfi_startproc
+ 1568               	/* prologue: function */
+ 1569               	/* frame size = 0 */
+ 1570               	/* stack size = 0 */
+ 1571               	.L__stack_usage = 0
+ 382:../../../../quantum/audio/audio.c ****     audio_config.enable ^= 1;
+ 1572               		.loc 1 382 0
+ 1573 0000 8091 0000 		lds r24,audio_config
+ 1574 0004 982F      		mov r25,r24
+ 1575 0006 9095      		com r25
+ 1576 0008 90FB      		bst r25,0
+ 1577 000a 80F9      		bld r24,0
+ 1578 000c 8093 0000 		sts audio_config,r24
+ 383:../../../../quantum/audio/audio.c ****     eeconfig_update_audio(audio_config.raw);
+ 1579               		.loc 1 383 0
+ 1580 0010 0E94 0000 		call eeconfig_update_audio
+ 1581               	.LVL94:
+ 384:../../../../quantum/audio/audio.c ****     if (audio_config.enable)
+ 1582               		.loc 1 384 0
+ 1583 0014 8091 0000 		lds r24,audio_config
+ 1584 0018 80FD      		sbrc r24,0
+ 385:../../../../quantum/audio/audio.c ****         audio_on_user();
+ 1585               		.loc 1 385 0
+ 1586 001a 0C94 0000 		jmp audio_on_user
+ 1587               	.LVL95:
+ 1588               	.L115:
+ 1589 001e 0895      		ret
+ 1590               		.cfi_endproc
+ 1591               	.LFE115:
+ 1593               		.section	.text.audio_on,"ax",@progbits
+ 1594               	.global	audio_on
+ 1596               	audio_on:
+ 1597               	.LFB116:
+ 386:../../../../quantum/audio/audio.c **** }
+ 387:../../../../quantum/audio/audio.c **** 
+ 388:../../../../quantum/audio/audio.c **** void audio_on(void) {
+ 1598               		.loc 1 388 0
+ 1599               		.cfi_startproc
+ 1600               	/* prologue: function */
+ 1601               	/* frame size = 0 */
+ 1602               	/* stack size = 0 */
+ 1603               	.L__stack_usage = 0
+ 389:../../../../quantum/audio/audio.c ****     audio_config.enable = 1;
+ 1604               		.loc 1 389 0
+ 1605 0000 8091 0000 		lds r24,audio_config
+ 1606 0004 8160      		ori r24,lo8(1<<0)
+ 1607 0006 8093 0000 		sts audio_config,r24
+ 390:../../../../quantum/audio/audio.c ****     eeconfig_update_audio(audio_config.raw);
+ 1608               		.loc 1 390 0
+ 1609 000a 0E94 0000 		call eeconfig_update_audio
+ 1610               	.LVL96:
+ 391:../../../../quantum/audio/audio.c ****     audio_on_user();
+ 1611               		.loc 1 391 0
+ 1612 000e 0C94 0000 		jmp audio_on_user
+ 1613               	.LVL97:
+ 1614               		.cfi_endproc
+ 1615               	.LFE116:
+ 1617               		.section	.text.audio_off,"ax",@progbits
+ 1618               	.global	audio_off
+ 1620               	audio_off:
+ 1621               	.LFB117:
+ 392:../../../../quantum/audio/audio.c **** }
+ 393:../../../../quantum/audio/audio.c **** 
+ 394:../../../../quantum/audio/audio.c **** void audio_off(void) {
+ 1622               		.loc 1 394 0
+ 1623               		.cfi_startproc
+ 1624               	/* prologue: function */
+ 1625               	/* frame size = 0 */
+ 1626               	/* stack size = 0 */
+ 1627               	.L__stack_usage = 0
+ 395:../../../../quantum/audio/audio.c ****     audio_config.enable = 0;
+ 1628               		.loc 1 395 0
+ 1629 0000 8091 0000 		lds r24,audio_config
+ 1630 0004 8E7F      		andi r24,lo8(~(1<<0))
+ 1631 0006 8093 0000 		sts audio_config,r24
+ 396:../../../../quantum/audio/audio.c ****     eeconfig_update_audio(audio_config.raw);
+ 1632               		.loc 1 396 0
+ 1633 000a 0C94 0000 		jmp eeconfig_update_audio
+ 1634               	.LVL98:
+ 1635               		.cfi_endproc
+ 1636               	.LFE117:
+ 1638               		.section	.text.set_polyphony_rate,"ax",@progbits
+ 1639               	.global	set_polyphony_rate
+ 1641               	set_polyphony_rate:
+ 1642               	.LFB118:
+ 397:../../../../quantum/audio/audio.c **** }
+ 398:../../../../quantum/audio/audio.c **** 
+ 399:../../../../quantum/audio/audio.c **** #ifdef VIBRATO_ENABLE
+ 400:../../../../quantum/audio/audio.c **** 
+ 401:../../../../quantum/audio/audio.c **** // Vibrato rate functions
+ 402:../../../../quantum/audio/audio.c **** 
+ 403:../../../../quantum/audio/audio.c **** void set_vibrato_rate(float rate) {
+ 404:../../../../quantum/audio/audio.c ****     vibrato_rate = rate;
+ 405:../../../../quantum/audio/audio.c **** }
+ 406:../../../../quantum/audio/audio.c **** 
+ 407:../../../../quantum/audio/audio.c **** void increase_vibrato_rate(float change) {
+ 408:../../../../quantum/audio/audio.c ****     vibrato_rate *= change;
+ 409:../../../../quantum/audio/audio.c **** }
+ 410:../../../../quantum/audio/audio.c **** 
+ 411:../../../../quantum/audio/audio.c **** void decrease_vibrato_rate(float change) {
+ 412:../../../../quantum/audio/audio.c ****     vibrato_rate /= change;
+ 413:../../../../quantum/audio/audio.c **** }
+ 414:../../../../quantum/audio/audio.c **** 
+ 415:../../../../quantum/audio/audio.c **** #ifdef VIBRATO_STRENGTH_ENABLE
+ 416:../../../../quantum/audio/audio.c **** 
+ 417:../../../../quantum/audio/audio.c **** void set_vibrato_strength(float strength) {
+ 418:../../../../quantum/audio/audio.c ****     vibrato_strength = strength;
+ 419:../../../../quantum/audio/audio.c **** }
+ 420:../../../../quantum/audio/audio.c **** 
+ 421:../../../../quantum/audio/audio.c **** void increase_vibrato_strength(float change) {
+ 422:../../../../quantum/audio/audio.c ****     vibrato_strength *= change;
+ 423:../../../../quantum/audio/audio.c **** }
+ 424:../../../../quantum/audio/audio.c **** 
+ 425:../../../../quantum/audio/audio.c **** void decrease_vibrato_strength(float change) {
+ 426:../../../../quantum/audio/audio.c ****     vibrato_strength /= change;
+ 427:../../../../quantum/audio/audio.c **** }
+ 428:../../../../quantum/audio/audio.c **** 
+ 429:../../../../quantum/audio/audio.c **** #endif  /* VIBRATO_STRENGTH_ENABLE */
+ 430:../../../../quantum/audio/audio.c **** 
+ 431:../../../../quantum/audio/audio.c **** #endif /* VIBRATO_ENABLE */
+ 432:../../../../quantum/audio/audio.c **** 
+ 433:../../../../quantum/audio/audio.c **** // Polyphony functions
+ 434:../../../../quantum/audio/audio.c **** 
+ 435:../../../../quantum/audio/audio.c **** void set_polyphony_rate(float rate) {
+ 1643               		.loc 1 435 0
+ 1644               		.cfi_startproc
+ 1645               	.LVL99:
+ 1646               	/* prologue: function */
+ 1647               	/* frame size = 0 */
+ 1648               	/* stack size = 0 */
+ 1649               	.L__stack_usage = 0
+ 436:../../../../quantum/audio/audio.c ****     polyphony_rate = rate;
+ 1650               		.loc 1 436 0
+ 1651 0000 6093 0000 		sts polyphony_rate,r22
+ 1652 0004 7093 0000 		sts polyphony_rate+1,r23
+ 1653 0008 8093 0000 		sts polyphony_rate+2,r24
+ 1654 000c 9093 0000 		sts polyphony_rate+3,r25
+ 1655 0010 0895      		ret
+ 1656               		.cfi_endproc
+ 1657               	.LFE118:
+ 1659               		.section	.text.enable_polyphony,"ax",@progbits
+ 1660               	.global	enable_polyphony
+ 1662               	enable_polyphony:
+ 1663               	.LFB119:
+ 437:../../../../quantum/audio/audio.c **** }
+ 438:../../../../quantum/audio/audio.c **** 
+ 439:../../../../quantum/audio/audio.c **** void enable_polyphony() {
+ 1664               		.loc 1 439 0
+ 1665               		.cfi_startproc
+ 1666               	/* prologue: function */
+ 1667               	/* frame size = 0 */
+ 1668               	/* stack size = 0 */
+ 1669               	.L__stack_usage = 0
+ 440:../../../../quantum/audio/audio.c ****     polyphony_rate = 5;
+ 1670               		.loc 1 440 0
+ 1671 0000 80E0      		ldi r24,0
+ 1672 0002 90E0      		ldi r25,0
+ 1673 0004 A0EA      		ldi r26,lo8(-96)
+ 1674 0006 B0E4      		ldi r27,lo8(64)
+ 1675 0008 8093 0000 		sts polyphony_rate,r24
+ 1676 000c 9093 0000 		sts polyphony_rate+1,r25
+ 1677 0010 A093 0000 		sts polyphony_rate+2,r26
+ 1678 0014 B093 0000 		sts polyphony_rate+3,r27
+ 1679 0018 0895      		ret
+ 1680               		.cfi_endproc
+ 1681               	.LFE119:
+ 1683               		.section	.text.disable_polyphony,"ax",@progbits
+ 1684               	.global	disable_polyphony
+ 1686               	disable_polyphony:
+ 1687               	.LFB120:
+ 441:../../../../quantum/audio/audio.c **** }
+ 442:../../../../quantum/audio/audio.c **** 
+ 443:../../../../quantum/audio/audio.c **** void disable_polyphony() {
+ 1688               		.loc 1 443 0
+ 1689               		.cfi_startproc
+ 1690               	/* prologue: function */
+ 1691               	/* frame size = 0 */
+ 1692               	/* stack size = 0 */
+ 1693               	.L__stack_usage = 0
+ 444:../../../../quantum/audio/audio.c ****     polyphony_rate = 0;
+ 1694               		.loc 1 444 0
+ 1695 0000 1092 0000 		sts polyphony_rate,__zero_reg__
+ 1696 0004 1092 0000 		sts polyphony_rate+1,__zero_reg__
+ 1697 0008 1092 0000 		sts polyphony_rate+2,__zero_reg__
+ 1698 000c 1092 0000 		sts polyphony_rate+3,__zero_reg__
+ 1699 0010 0895      		ret
+ 1700               		.cfi_endproc
+ 1701               	.LFE120:
+ 1703               		.section	.text.increase_polyphony_rate,"ax",@progbits
+ 1704               	.global	increase_polyphony_rate
+ 1706               	increase_polyphony_rate:
+ 1707               	.LFB121:
+ 445:../../../../quantum/audio/audio.c **** }
+ 446:../../../../quantum/audio/audio.c **** 
+ 447:../../../../quantum/audio/audio.c **** void increase_polyphony_rate(float change) {
+ 1708               		.loc 1 447 0
+ 1709               		.cfi_startproc
+ 1710               	.LVL100:
+ 1711               	/* prologue: function */
+ 1712               	/* frame size = 0 */
+ 1713               	/* stack size = 0 */
+ 1714               	.L__stack_usage = 0
+ 1715 0000 9B01      		movw r18,r22
+ 1716 0002 AC01      		movw r20,r24
+ 448:../../../../quantum/audio/audio.c ****     polyphony_rate *= change;
+ 1717               		.loc 1 448 0
+ 1718 0004 6091 0000 		lds r22,polyphony_rate
+ 1719 0008 7091 0000 		lds r23,polyphony_rate+1
+ 1720 000c 8091 0000 		lds r24,polyphony_rate+2
+ 1721 0010 9091 0000 		lds r25,polyphony_rate+3
+ 1722               	.LVL101:
+ 1723 0014 0E94 0000 		call __mulsf3
+ 1724               	.LVL102:
+ 1725 0018 6093 0000 		sts polyphony_rate,r22
+ 1726 001c 7093 0000 		sts polyphony_rate+1,r23
+ 1727 0020 8093 0000 		sts polyphony_rate+2,r24
+ 1728 0024 9093 0000 		sts polyphony_rate+3,r25
+ 1729 0028 0895      		ret
+ 1730               		.cfi_endproc
+ 1731               	.LFE121:
+ 1733               		.section	.text.decrease_polyphony_rate,"ax",@progbits
+ 1734               	.global	decrease_polyphony_rate
+ 1736               	decrease_polyphony_rate:
+ 1737               	.LFB122:
+ 449:../../../../quantum/audio/audio.c **** }
+ 450:../../../../quantum/audio/audio.c **** 
+ 451:../../../../quantum/audio/audio.c **** void decrease_polyphony_rate(float change) {
+ 1738               		.loc 1 451 0
+ 1739               		.cfi_startproc
+ 1740               	.LVL103:
+ 1741               	/* prologue: function */
+ 1742               	/* frame size = 0 */
+ 1743               	/* stack size = 0 */
+ 1744               	.L__stack_usage = 0
+ 1745 0000 9B01      		movw r18,r22
+ 1746 0002 AC01      		movw r20,r24
+ 452:../../../../quantum/audio/audio.c ****     polyphony_rate /= change;
+ 1747               		.loc 1 452 0
+ 1748 0004 6091 0000 		lds r22,polyphony_rate
+ 1749 0008 7091 0000 		lds r23,polyphony_rate+1
+ 1750 000c 8091 0000 		lds r24,polyphony_rate+2
+ 1751 0010 9091 0000 		lds r25,polyphony_rate+3
+ 1752               	.LVL104:
+ 1753 0014 0E94 0000 		call __divsf3
+ 1754               	.LVL105:
+ 1755 0018 6093 0000 		sts polyphony_rate,r22
+ 1756 001c 7093 0000 		sts polyphony_rate+1,r23
+ 1757 0020 8093 0000 		sts polyphony_rate+2,r24
+ 1758 0024 9093 0000 		sts polyphony_rate+3,r25
+ 1759 0028 0895      		ret
+ 1760               		.cfi_endproc
+ 1761               	.LFE122:
+ 1763               		.section	.text.set_timbre,"ax",@progbits
+ 1764               	.global	set_timbre
+ 1766               	set_timbre:
+ 1767               	.LFB123:
+ 453:../../../../quantum/audio/audio.c **** }
+ 454:../../../../quantum/audio/audio.c **** 
+ 455:../../../../quantum/audio/audio.c **** // Timbre function
+ 456:../../../../quantum/audio/audio.c **** 
+ 457:../../../../quantum/audio/audio.c **** void set_timbre(float timbre) {
+ 1768               		.loc 1 457 0
+ 1769               		.cfi_startproc
+ 1770               	.LVL106:
+ 1771               	/* prologue: function */
+ 1772               	/* frame size = 0 */
+ 1773               	/* stack size = 0 */
+ 1774               	.L__stack_usage = 0
+ 458:../../../../quantum/audio/audio.c ****     note_timbre = timbre;
+ 1775               		.loc 1 458 0
+ 1776 0000 6093 0000 		sts note_timbre,r22
+ 1777 0004 7093 0000 		sts note_timbre+1,r23
+ 1778 0008 8093 0000 		sts note_timbre+2,r24
+ 1779 000c 9093 0000 		sts note_timbre+3,r25
+ 1780 0010 0895      		ret
+ 1781               		.cfi_endproc
+ 1782               	.LFE123:
+ 1784               		.section	.text.set_tempo,"ax",@progbits
+ 1785               	.global	set_tempo
+ 1787               	set_tempo:
+ 1788               	.LFB124:
+ 459:../../../../quantum/audio/audio.c **** }
+ 460:../../../../quantum/audio/audio.c **** 
+ 461:../../../../quantum/audio/audio.c **** // Tempo functions
+ 462:../../../../quantum/audio/audio.c **** 
+ 463:../../../../quantum/audio/audio.c **** void set_tempo(uint8_t tempo) {
+ 1789               		.loc 1 463 0
+ 1790               		.cfi_startproc
+ 1791               	.LVL107:
+ 1792               	/* prologue: function */
+ 1793               	/* frame size = 0 */
+ 1794               	/* stack size = 0 */
+ 1795               	.L__stack_usage = 0
+ 464:../../../../quantum/audio/audio.c ****     note_tempo = tempo;
+ 1796               		.loc 1 464 0
+ 1797 0000 8093 0000 		sts note_tempo,r24
+ 1798 0004 0895      		ret
+ 1799               		.cfi_endproc
+ 1800               	.LFE124:
+ 1802               		.section	.text.decrease_tempo,"ax",@progbits
+ 1803               	.global	decrease_tempo
+ 1805               	decrease_tempo:
+ 1806               	.LFB125:
+ 465:../../../../quantum/audio/audio.c **** }
+ 466:../../../../quantum/audio/audio.c **** 
+ 467:../../../../quantum/audio/audio.c **** void decrease_tempo(uint8_t tempo_change) {
+ 1807               		.loc 1 467 0
+ 1808               		.cfi_startproc
+ 1809               	.LVL108:
+ 1810               	/* prologue: function */
+ 1811               	/* frame size = 0 */
+ 1812               	/* stack size = 0 */
+ 1813               	.L__stack_usage = 0
+ 468:../../../../quantum/audio/audio.c ****     note_tempo += tempo_change;
+ 1814               		.loc 1 468 0
+ 1815 0000 9091 0000 		lds r25,note_tempo
+ 1816 0004 890F      		add r24,r25
+ 1817               	.LVL109:
+ 1818 0006 8093 0000 		sts note_tempo,r24
+ 1819 000a 0895      		ret
+ 1820               		.cfi_endproc
+ 1821               	.LFE125:
+ 1823               		.section	.text.increase_tempo,"ax",@progbits
+ 1824               	.global	increase_tempo
+ 1826               	increase_tempo:
+ 1827               	.LFB126:
+ 469:../../../../quantum/audio/audio.c **** }
+ 470:../../../../quantum/audio/audio.c **** 
+ 471:../../../../quantum/audio/audio.c **** void increase_tempo(uint8_t tempo_change) {
+ 1828               		.loc 1 471 0
+ 1829               		.cfi_startproc
+ 1830               	.LVL110:
+ 1831               	/* prologue: function */
+ 1832               	/* frame size = 0 */
+ 1833               	/* stack size = 0 */
+ 1834               	.L__stack_usage = 0
+ 472:../../../../quantum/audio/audio.c ****     if (note_tempo - tempo_change < 10) {
+ 1835               		.loc 1 472 0
+ 1836 0000 9091 0000 		lds r25,note_tempo
+ 1837 0004 292F      		mov r18,r25
+ 1838 0006 30E0      		ldi r19,0
+ 1839 0008 281B      		sub r18,r24
+ 1840 000a 3109      		sbc r19,__zero_reg__
+ 1841 000c 2A30      		cpi r18,10
+ 1842 000e 3105      		cpc r19,__zero_reg__
+ 1843 0010 04F4      		brge .L128
+ 473:../../../../quantum/audio/audio.c ****         note_tempo = 10;
+ 1844               		.loc 1 473 0
+ 1845 0012 8AE0      		ldi r24,lo8(10)
+ 1846               	.LVL111:
+ 1847 0014 8093 0000 		sts note_tempo,r24
+ 1848 0018 0895      		ret
+ 1849               	.LVL112:
+ 1850               	.L128:
+ 474:../../../../quantum/audio/audio.c ****     } else {
+ 475:../../../../quantum/audio/audio.c ****         note_tempo -= tempo_change;
+ 1851               		.loc 1 475 0
+ 1852 001a 981B      		sub r25,r24
+ 1853 001c 9093 0000 		sts note_tempo,r25
+ 1854 0020 0895      		ret
+ 1855               		.cfi_endproc
+ 1856               	.LFE126:
+ 1858               	.global	envelope_index
+ 1859               		.section	.bss.envelope_index,"aw",@nobits
+ 1862               	envelope_index:
+ 1863 0000 0000      		.zero	2
+ 1864               		.comm	audio_config,1,1
+ 1865               		.section	.bss.audio_initialized,"aw",@nobits
+ 1868               	audio_initialized:
+ 1869 0000 00        		.zero	1
+ 1870               	.global	polyphony_rate
+ 1871               		.section	.bss.polyphony_rate,"aw",@nobits
+ 1874               	polyphony_rate:
+ 1875 0000 0000 0000 		.zero	4
+ 1876               	.global	rest_counter
+ 1877               		.section	.bss.rest_counter,"aw",@nobits
+ 1880               	rest_counter:
+ 1881 0000 00        		.zero	1
+ 1882               	.global	current_note
+ 1883               		.section	.bss.current_note,"aw",@nobits
+ 1886               	current_note:
+ 1887 0000 00        		.zero	1
+ 1888               	.global	note_resting
+ 1889               		.section	.bss.note_resting,"aw",@nobits
+ 1892               	note_resting:
+ 1893 0000 00        		.zero	1
+ 1894               		.comm	notes_rest,4,1
+ 1895               		.comm	notes_repeat,1,1
+ 1896               		.comm	notes_count,2,1
+ 1897               		.comm	notes_pointer,2,1
+ 1898               	.global	note_position
+ 1899               		.section	.bss.note_position,"aw",@nobits
+ 1902               	note_position:
+ 1903 0000 0000      		.zero	2
+ 1904               	.global	note_timbre
+ 1905               		.section	.data.note_timbre,"aw",@progbits
+ 1908               	note_timbre:
+ 1909 0000 00        		.byte	0
+ 1910 0001 00        		.byte	0
+ 1911 0002 00        		.byte	0
+ 1912 0003 3F        		.byte	63
+ 1913               	.global	note_tempo
+ 1914               		.section	.data.note_tempo,"aw",@progbits
+ 1917               	note_tempo:
+ 1918 0000 64        		.byte	100
+ 1919               	.global	note_length
+ 1920               		.section	.bss.note_length,"aw",@nobits
+ 1923               	note_length:
+ 1924 0000 0000 0000 		.zero	4
+ 1925               	.global	note_frequency
+ 1926               		.section	.bss.note_frequency,"aw",@nobits
+ 1929               	note_frequency:
+ 1930 0000 0000 0000 		.zero	4
+ 1931               	.global	playing_note
+ 1932               		.section	.bss.playing_note,"aw",@nobits
+ 1935               	playing_note:
+ 1936 0000 00        		.zero	1
+ 1937               	.global	playing_notes
+ 1938               		.section	.bss.playing_notes,"aw",@nobits
+ 1941               	playing_notes:
+ 1942 0000 00        		.zero	1
+ 1943               	.global	sample_length
+ 1944               		.section	.bss.sample_length,"aw",@nobits
+ 1947               	sample_length:
+ 1948 0000 0000      		.zero	2
+ 1949               		.comm	sample,2,1
+ 1950               	.global	place
+ 1951               		.section	.bss.place,"aw",@nobits
+ 1954               	place:
+ 1955 0000 0000 0000 		.zero	4
+ 1956               	.global	sliding
+ 1957               		.section	.bss.sliding,"aw",@nobits
+ 1960               	sliding:
+ 1961 0000 00        		.zero	1
+ 1962               	.global	volumes
+ 1963               		.section	.bss.volumes,"aw",@nobits
+ 1966               	volumes:
+ 1967 0000 0000 0000 		.zero	16
+ 1967      0000 0000 
+ 1967      0000 0000 
+ 1967      0000 0000 
+ 1968               	.global	frequencies
+ 1969               		.section	.bss.frequencies,"aw",@nobits
+ 1972               	frequencies:
+ 1973 0000 0000 0000 		.zero	32
+ 1973      0000 0000 
+ 1973      0000 0000 
+ 1973      0000 0000 
+ 1973      0000 0000 
+ 1974               	.global	position
+ 1975               		.section	.bss.position,"aw",@nobits
+ 1978               	position:
+ 1979 0000 0000 0000 		.zero	4
+ 1980               	.global	volume
+ 1981               		.section	.bss.volume,"aw",@nobits
+ 1984               	volume:
+ 1985 0000 0000      		.zero	2
+ 1986               	.global	frequency
+ 1987               		.section	.bss.frequency,"aw",@nobits
+ 1990               	frequency:
+ 1991 0000 0000 0000 		.zero	4
+ 1992               	.global	voice_place
+ 1993               		.section	.bss.voice_place,"aw",@nobits
+ 1996               	voice_place:
+ 1997 0000 0000      		.zero	2
+ 1998               	.global	voices
+ 1999               		.section	.bss.voices,"aw",@nobits
+ 2002               	voices:
+ 2003 0000 0000      		.zero	2
+ 2004               		.text
+ 2005               	.Letext0:
+ 2006               		.file 2 "/usr/local/Cellar/avr-gcc/4.9.3/avr/include/stdint.h"
+ 2007               		.file 3 "../../../../quantum/audio/audio.h"
+ 2008               		.file 4 "../../../../tmk_core/protocol/lufa/LUFA-git/LUFA/Drivers/USB/Core/USBTask.h"
+ 2009               		.file 5 "../../../../tmk_core/common/eeconfig.h"
+ 2010               		.file 6 "../../../../quantum/process_keycode/process_music.h"
+ 2011               		.file 7 "../../../../quantum/audio/voices.h"
+ 2012               		.file 8 "/usr/local/Cellar/avr-gcc/4.9.3/avr/include/math.h"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 audio.c
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:2      *ABS*:000000000000003e __SP_H__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:3      *ABS*:000000000000003d __SP_L__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:4      *ABS*:000000000000003f __SREG__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:5      *ABS*:0000000000000000 __tmp_reg__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:6      *ABS*:0000000000000001 __zero_reg__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:13     .text.audio_init:0000000000000000 audio_init
+                            *COM*:0000000000000001 audio_config
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1868   .bss.audio_initialized:0000000000000000 audio_initialized
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:57     .text.stop_all_notes:0000000000000000 stop_all_notes
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:2002   .bss.voices:0000000000000000 voices
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1941   .bss.playing_notes:0000000000000000 playing_notes
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1935   .bss.playing_note:0000000000000000 playing_note
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1990   .bss.frequency:0000000000000000 frequency
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1984   .bss.volume:0000000000000000 volume
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1972   .bss.frequencies:0000000000000000 frequencies
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1966   .bss.volumes:0000000000000000 volumes
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:128    .text.stop_note:0000000000000000 stop_note
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1996   .bss.voice_place:0000000000000000 voice_place
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:352    .text.__vector_32:0000000000000000 __vector_32
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1874   .bss.polyphony_rate:0000000000000000 polyphony_rate
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1954   .bss.place:0000000000000000 place
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1862   .bss.envelope_index:0000000000000000 envelope_index
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1908   .data.note_timbre:0000000000000000 note_timbre
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1929   .bss.note_frequency:0000000000000000 note_frequency
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1902   .bss.note_position:0000000000000000 note_position
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1923   .bss.note_length:0000000000000000 note_length
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1886   .bss.current_note:0000000000000000 current_note
+                            *COM*:0000000000000002 notes_count
+                            *COM*:0000000000000001 notes_repeat
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1892   .bss.note_resting:0000000000000000 note_resting
+                            *COM*:0000000000000004 notes_rest
+                            *COM*:0000000000000002 notes_pointer
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1917   .data.note_tempo:0000000000000000 note_tempo
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1202   .text.play_note:0000000000000000 play_note
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1336   .text.play_notes:0000000000000000 play_notes
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1528   .text.is_playing_notes:0000000000000000 is_playing_notes
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1545   .text.is_audio_on:0000000000000000 is_audio_on
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1564   .text.audio_toggle:0000000000000000 audio_toggle
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1596   .text.audio_on:0000000000000000 audio_on
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1620   .text.audio_off:0000000000000000 audio_off
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1641   .text.set_polyphony_rate:0000000000000000 set_polyphony_rate
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1662   .text.enable_polyphony:0000000000000000 enable_polyphony
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1686   .text.disable_polyphony:0000000000000000 disable_polyphony
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1706   .text.increase_polyphony_rate:0000000000000000 increase_polyphony_rate
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1736   .text.decrease_polyphony_rate:0000000000000000 decrease_polyphony_rate
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1766   .text.set_timbre:0000000000000000 set_timbre
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1787   .text.set_tempo:0000000000000000 set_tempo
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1805   .text.decrease_tempo:0000000000000000 decrease_tempo
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1826   .text.increase_tempo:0000000000000000 increase_tempo
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1880   .bss.rest_counter:0000000000000000 rest_counter
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1947   .bss.sample_length:0000000000000000 sample_length
+                            *COM*:0000000000000002 sample
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1960   .bss.sliding:0000000000000000 sliding
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccRARoAw.s:1978   .bss.position:0000000000000000 position
+
+UNDEFINED SYMBOLS
+eeconfig_is_enabled
+eeconfig_init
+eeconfig_read_audio
+__eqsf2
+__gtsf2
+__addsf3
+__divsf3
+__mulsf3
+__nesf2
+__ltsf2
+__fixunssfsi
+__floatunsisf
+__gesf2
+__divmodhi4
+pow
+voice_envelope
+eeconfig_update_audio
+audio_on_user
+__do_copy_data
+__do_clear_bss

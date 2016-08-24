@@ -1,0 +1,705 @@
+   1               		.file	"voices.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   7               		.text
+   8               	.Ltext0:
+   9               		.cfi_sections	.debug_frame
+  10               		.section	.text.set_voice,"ax",@progbits
+  11               	.global	set_voice
+  13               	set_voice:
+  14               	.LFB107:
+  15               		.file 1 "../../../../quantum/audio/voices.c"
+   1:../../../../quantum/audio/voices.c **** #include "voices.h"
+   2:../../../../quantum/audio/voices.c **** #include "audio.h"
+   3:../../../../quantum/audio/voices.c **** #include "stdlib.h"
+   4:../../../../quantum/audio/voices.c **** 
+   5:../../../../quantum/audio/voices.c **** // these are imported from audio.c
+   6:../../../../quantum/audio/voices.c **** extern uint16_t envelope_index;
+   7:../../../../quantum/audio/voices.c **** extern float note_timbre;
+   8:../../../../quantum/audio/voices.c **** extern float polyphony_rate;
+   9:../../../../quantum/audio/voices.c **** 
+  10:../../../../quantum/audio/voices.c **** voice_type voice = default_voice;
+  11:../../../../quantum/audio/voices.c **** 
+  12:../../../../quantum/audio/voices.c **** void set_voice(voice_type v) {
+  16               		.loc 1 12 0
+  17               		.cfi_startproc
+  18               	.LVL0:
+  19               	/* prologue: function */
+  20               	/* frame size = 0 */
+  21               	/* stack size = 0 */
+  22               	.L__stack_usage = 0
+  13:../../../../quantum/audio/voices.c ****     voice = v;
+  23               		.loc 1 13 0
+  24 0000 8093 0000 		sts voice,r24
+  25 0004 0895      		ret
+  26               		.cfi_endproc
+  27               	.LFE107:
+  29               		.section	.text.voice_iterate,"ax",@progbits
+  30               	.global	voice_iterate
+  32               	voice_iterate:
+  33               	.LFB108:
+  14:../../../../quantum/audio/voices.c **** }
+  15:../../../../quantum/audio/voices.c **** 
+  16:../../../../quantum/audio/voices.c **** void voice_iterate() {
+  34               		.loc 1 16 0
+  35               		.cfi_startproc
+  36               	/* prologue: function */
+  37               	/* frame size = 0 */
+  38               	/* stack size = 0 */
+  39               	.L__stack_usage = 0
+  17:../../../../quantum/audio/voices.c ****     voice = (voice + 1) % number_of_voices;
+  40               		.loc 1 17 0
+  41 0000 8091 0000 		lds r24,voice
+  42 0004 90E0      		ldi r25,0
+  43 0006 0196      		adiw r24,1
+  44 0008 66E0      		ldi r22,lo8(6)
+  45 000a 70E0      		ldi r23,0
+  46 000c 0E94 0000 		call __divmodhi4
+  47 0010 8093 0000 		sts voice,r24
+  48 0014 0895      		ret
+  49               		.cfi_endproc
+  50               	.LFE108:
+  52               		.section	.text.voice_deiterate,"ax",@progbits
+  53               	.global	voice_deiterate
+  55               	voice_deiterate:
+  56               	.LFB109:
+  18:../../../../quantum/audio/voices.c **** }
+  19:../../../../quantum/audio/voices.c **** 
+  20:../../../../quantum/audio/voices.c **** void voice_deiterate() {
+  57               		.loc 1 20 0
+  58               		.cfi_startproc
+  59               	/* prologue: function */
+  60               	/* frame size = 0 */
+  61               	/* stack size = 0 */
+  62               	.L__stack_usage = 0
+  21:../../../../quantum/audio/voices.c ****     voice = (voice - 1) % number_of_voices;
+  63               		.loc 1 21 0
+  64 0000 8091 0000 		lds r24,voice
+  65 0004 90E0      		ldi r25,0
+  66 0006 0197      		sbiw r24,1
+  67 0008 66E0      		ldi r22,lo8(6)
+  68 000a 70E0      		ldi r23,0
+  69 000c 0E94 0000 		call __divmodhi4
+  70 0010 8093 0000 		sts voice,r24
+  71 0014 0895      		ret
+  72               		.cfi_endproc
+  73               	.LFE109:
+  75               	.global	__floatunsisf
+  76               	.global	__divsf3
+  77               	.global	__mulsf3
+  78               	.global	__fixunssfsi
+  79               	.global	__subsf3
+  80               	.global	__floatsisf
+  81               	.global	__addsf3
+  82               	.global	__fixsfsi
+  83               		.section	.text.voice_envelope,"ax",@progbits
+  84               	.global	voice_envelope
+  86               	voice_envelope:
+  87               	.LFB110:
+  22:../../../../quantum/audio/voices.c **** }
+  23:../../../../quantum/audio/voices.c **** 
+  24:../../../../quantum/audio/voices.c **** float voice_envelope(float frequency) {
+  88               		.loc 1 24 0
+  89               		.cfi_startproc
+  90               	.LVL1:
+  91 0000 8F92      		push r8
+  92               	.LCFI0:
+  93               		.cfi_def_cfa_offset 3
+  94               		.cfi_offset 8, -2
+  95 0002 9F92      		push r9
+  96               	.LCFI1:
+  97               		.cfi_def_cfa_offset 4
+  98               		.cfi_offset 9, -3
+  99 0004 AF92      		push r10
+ 100               	.LCFI2:
+ 101               		.cfi_def_cfa_offset 5
+ 102               		.cfi_offset 10, -4
+ 103 0006 BF92      		push r11
+ 104               	.LCFI3:
+ 105               		.cfi_def_cfa_offset 6
+ 106               		.cfi_offset 11, -5
+ 107 0008 CF92      		push r12
+ 108               	.LCFI4:
+ 109               		.cfi_def_cfa_offset 7
+ 110               		.cfi_offset 12, -6
+ 111 000a DF92      		push r13
+ 112               	.LCFI5:
+ 113               		.cfi_def_cfa_offset 8
+ 114               		.cfi_offset 13, -7
+ 115 000c EF92      		push r14
+ 116               	.LCFI6:
+ 117               		.cfi_def_cfa_offset 9
+ 118               		.cfi_offset 14, -8
+ 119 000e FF92      		push r15
+ 120               	.LCFI7:
+ 121               		.cfi_def_cfa_offset 10
+ 122               		.cfi_offset 15, -9
+ 123 0010 0F93      		push r16
+ 124               	.LCFI8:
+ 125               		.cfi_def_cfa_offset 11
+ 126               		.cfi_offset 16, -10
+ 127 0012 1F93      		push r17
+ 128               	.LCFI9:
+ 129               		.cfi_def_cfa_offset 12
+ 130               		.cfi_offset 17, -11
+ 131 0014 CF93      		push r28
+ 132               	.LCFI10:
+ 133               		.cfi_def_cfa_offset 13
+ 134               		.cfi_offset 28, -12
+ 135 0016 DF93      		push r29
+ 136               	.LCFI11:
+ 137               		.cfi_def_cfa_offset 14
+ 138               		.cfi_offset 29, -13
+ 139               	/* prologue: function */
+ 140               	/* frame size = 0 */
+ 141               	/* stack size = 12 */
+ 142               	.L__stack_usage = 12
+ 143 0018 6B01      		movw r12,r22
+ 144 001a 7C01      		movw r14,r24
+  25:../../../../quantum/audio/voices.c ****     // envelope_index ranges from 0 to 0xFFFF, which is preserved at 880.0 Hz
+  26:../../../../quantum/audio/voices.c ****     uint16_t compensated_index = (uint16_t)((float)envelope_index * (880.0 / frequency));
+ 145               		.loc 1 26 0
+ 146 001c C091 0000 		lds r28,envelope_index
+ 147 0020 D091 0000 		lds r29,envelope_index+1
+ 148 0024 BE01      		movw r22,r28
+ 149               	.LVL2:
+ 150 0026 80E0      		ldi r24,0
+ 151 0028 90E0      		ldi r25,0
+ 152 002a 0E94 0000 		call __floatunsisf
+ 153               	.LVL3:
+ 154 002e 4B01      		movw r8,r22
+ 155 0030 5C01      		movw r10,r24
+ 156 0032 A701      		movw r20,r14
+ 157 0034 9601      		movw r18,r12
+ 158 0036 60E0      		ldi r22,0
+ 159 0038 70E0      		ldi r23,0
+ 160 003a 8CE5      		ldi r24,lo8(92)
+ 161 003c 94E4      		ldi r25,lo8(68)
+ 162 003e 0E94 0000 		call __divsf3
+ 163               	.LVL4:
+ 164 0042 9B01      		movw r18,r22
+ 165 0044 AC01      		movw r20,r24
+ 166 0046 C501      		movw r24,r10
+ 167 0048 B401      		movw r22,r8
+ 168 004a 0E94 0000 		call __mulsf3
+ 169               	.LVL5:
+ 170 004e 0E94 0000 		call __fixunssfsi
+ 171               	.LVL6:
+  27:../../../../quantum/audio/voices.c **** 
+  28:../../../../quantum/audio/voices.c ****     switch (voice) {
+ 172               		.loc 1 28 0
+ 173 0052 2091 0000 		lds r18,voice
+ 174 0056 2330      		cpi r18,lo8(3)
+ 175 0058 01F4      		brne .+2
+ 176 005a 00C0      		rjmp .L6
+ 177 005c 00F4      		brsh .L7
+ 178 005e 2223      		tst r18
+ 179 0060 01F0      		breq .L8
+ 180 0062 2130      		cpi r18,lo8(1)
+ 181 0064 01F0      		breq .L9
+ 182 0066 00C0      		rjmp .L5
+ 183               	.L7:
+ 184 0068 2430      		cpi r18,lo8(4)
+ 185 006a 01F4      		brne .+2
+ 186 006c 00C0      		rjmp .L10
+ 187 006e 2530      		cpi r18,lo8(5)
+ 188 0070 01F4      		brne .+2
+ 189 0072 00C0      		rjmp .L11
+ 190 0074 00C0      		rjmp .L5
+ 191               	.L8:
+  29:../../../../quantum/audio/voices.c ****         case default_voice:
+  30:../../../../quantum/audio/voices.c ****             note_timbre = TIMBRE_50;
+ 192               		.loc 1 30 0
+ 193 0076 80E0      		ldi r24,0
+ 194 0078 90E0      		ldi r25,0
+ 195 007a A0E0      		ldi r26,0
+ 196 007c BFE3      		ldi r27,lo8(63)
+ 197 007e 8093 0000 		sts note_timbre,r24
+ 198 0082 9093 0000 		sts note_timbre+1,r25
+ 199 0086 A093 0000 		sts note_timbre+2,r26
+ 200 008a B093 0000 		sts note_timbre+3,r27
+  31:../../../../quantum/audio/voices.c ****             polyphony_rate = 0;
+ 201               		.loc 1 31 0
+ 202 008e 1092 0000 		sts polyphony_rate,__zero_reg__
+ 203 0092 1092 0000 		sts polyphony_rate+1,__zero_reg__
+ 204 0096 1092 0000 		sts polyphony_rate+2,__zero_reg__
+ 205 009a 1092 0000 		sts polyphony_rate+3,__zero_reg__
+  32:../../../../quantum/audio/voices.c **** 	        break;
+ 206               		.loc 1 32 0
+ 207 009e 00C0      		rjmp .L5
+ 208               	.L9:
+  33:../../../../quantum/audio/voices.c **** 
+  34:../../../../quantum/audio/voices.c ****         case butts_fader:
+  35:../../../../quantum/audio/voices.c ****             polyphony_rate = 0;
+ 209               		.loc 1 35 0
+ 210 00a0 1092 0000 		sts polyphony_rate,__zero_reg__
+ 211 00a4 1092 0000 		sts polyphony_rate+1,__zero_reg__
+ 212 00a8 1092 0000 		sts polyphony_rate+2,__zero_reg__
+ 213 00ac 1092 0000 		sts polyphony_rate+3,__zero_reg__
+  36:../../../../quantum/audio/voices.c ****             switch (compensated_index) {
+ 214               		.loc 1 36 0
+ 215 00b0 6431      		cpi r22,20
+ 216 00b2 7105      		cpc r23,__zero_reg__
+ 217 00b4 00F4      		brsh .L13
+ 218 00b6 6A30      		cpi r22,10
+ 219 00b8 7105      		cpc r23,__zero_reg__
+ 220 00ba 00F4      		brsh .L27
+  37:../../../../quantum/audio/voices.c ****                 case 0 ... 9:
+  38:../../../../quantum/audio/voices.c ****                     frequency = frequency / 4;
+ 221               		.loc 1 38 0
+ 222 00bc 20E0      		ldi r18,0
+ 223 00be 30E0      		ldi r19,0
+ 224 00c0 40E8      		ldi r20,lo8(-128)
+ 225 00c2 5EE3      		ldi r21,lo8(62)
+ 226 00c4 00C0      		rjmp .L23
+ 227               	.L13:
+  36:../../../../quantum/audio/voices.c ****             switch (compensated_index) {
+ 228               		.loc 1 36 0
+ 229 00c6 693C      		cpi r22,-55
+ 230 00c8 7105      		cpc r23,__zero_reg__
+ 231 00ca 00F0      		brlo .+2
+ 232 00cc 00C0      		rjmp .L24
+  39:../../../../quantum/audio/voices.c ****                     note_timbre = TIMBRE_12;
+  40:../../../../quantum/audio/voices.c **** 	                break;
+  41:../../../../quantum/audio/voices.c **** 
+  42:../../../../quantum/audio/voices.c ****                 case 10 ... 19:
+  43:../../../../quantum/audio/voices.c ****                     frequency = frequency / 2;
+  44:../../../../quantum/audio/voices.c ****                     note_timbre = TIMBRE_12;
+  45:../../../../quantum/audio/voices.c **** 	                break;
+  46:../../../../quantum/audio/voices.c **** 
+  47:../../../../quantum/audio/voices.c ****                 case 20 ... 200:
+  48:../../../../quantum/audio/voices.c ****                     note_timbre = .125 - pow(((float)compensated_index - 20) / (200 - 20), 2)*.125;
+ 233               		.loc 1 48 0
+ 234 00ce 80E0      		ldi r24,0
+ 235 00d0 90E0      		ldi r25,0
+ 236 00d2 0E94 0000 		call __floatunsisf
+ 237               	.LVL7:
+ 238 00d6 20E0      		ldi r18,0
+ 239 00d8 30E0      		ldi r19,0
+ 240 00da 40EA      		ldi r20,lo8(-96)
+ 241 00dc 51E4      		ldi r21,lo8(65)
+ 242 00de 0E94 0000 		call __subsf3
+ 243               	.LVL8:
+ 244 00e2 20E0      		ldi r18,0
+ 245 00e4 30E0      		ldi r19,0
+ 246 00e6 44E3      		ldi r20,lo8(52)
+ 247 00e8 53E4      		ldi r21,lo8(67)
+ 248 00ea 0E94 0000 		call __divsf3
+ 249               	.LVL9:
+ 250 00ee 9B01      		movw r18,r22
+ 251 00f0 AC01      		movw r20,r24
+ 252 00f2 0E94 0000 		call __mulsf3
+ 253               	.LVL10:
+ 254 00f6 20E0      		ldi r18,0
+ 255 00f8 30E0      		ldi r19,0
+ 256 00fa 40E0      		ldi r20,0
+ 257 00fc 5EE3      		ldi r21,lo8(62)
+ 258 00fe 0E94 0000 		call __mulsf3
+ 259               	.LVL11:
+ 260 0102 9B01      		movw r18,r22
+ 261 0104 AC01      		movw r20,r24
+ 262 0106 60E0      		ldi r22,0
+ 263 0108 70E0      		ldi r23,0
+ 264 010a 80E0      		ldi r24,0
+ 265 010c 9EE3      		ldi r25,lo8(62)
+ 266 010e 0E94 0000 		call __subsf3
+ 267               	.LVL12:
+ 268 0112 00C0      		rjmp .L25
+ 269               	.LVL13:
+ 270               	.L27:
+  43:../../../../quantum/audio/voices.c ****                     note_timbre = TIMBRE_12;
+ 271               		.loc 1 43 0
+ 272 0114 20E0      		ldi r18,0
+ 273 0116 30E0      		ldi r19,0
+ 274 0118 40E0      		ldi r20,0
+ 275 011a 5FE3      		ldi r21,lo8(63)
+ 276               	.L23:
+ 277 011c C701      		movw r24,r14
+ 278 011e B601      		movw r22,r12
+ 279               	.LVL14:
+ 280 0120 0E94 0000 		call __mulsf3
+ 281               	.LVL15:
+ 282 0124 6B01      		movw r12,r22
+ 283 0126 7C01      		movw r14,r24
+ 284               	.LVL16:
+  44:../../../../quantum/audio/voices.c **** 	                break;
+ 285               		.loc 1 44 0
+ 286 0128 80E0      		ldi r24,0
+ 287 012a 90E0      		ldi r25,0
+ 288 012c A0E0      		ldi r26,0
+ 289 012e BEE3      		ldi r27,lo8(62)
+ 290 0130 8093 0000 		sts note_timbre,r24
+ 291 0134 9093 0000 		sts note_timbre+1,r25
+ 292 0138 A093 0000 		sts note_timbre+2,r26
+ 293 013c B093 0000 		sts note_timbre+3,r27
+  45:../../../../quantum/audio/voices.c **** 
+ 294               		.loc 1 45 0
+ 295 0140 00C0      		rjmp .L5
+ 296               	.LVL17:
+ 297               	.L6:
+  49:../../../../quantum/audio/voices.c **** 	                break;
+  50:../../../../quantum/audio/voices.c **** 
+  51:../../../../quantum/audio/voices.c ****                 default:
+  52:../../../../quantum/audio/voices.c ****                     note_timbre = 0;
+  53:../../../../quantum/audio/voices.c ****                 	break;
+  54:../../../../quantum/audio/voices.c ****             }
+  55:../../../../quantum/audio/voices.c ****     	    break;
+  56:../../../../quantum/audio/voices.c **** 
+  57:../../../../quantum/audio/voices.c ****         // case octave_crunch:
+  58:../../../../quantum/audio/voices.c ****         //     polyphony_rate = 0;
+  59:../../../../quantum/audio/voices.c ****         //     switch (compensated_index) {
+  60:../../../../quantum/audio/voices.c ****         //         case 0 ... 9:
+  61:../../../../quantum/audio/voices.c ****         //         case 20 ... 24:
+  62:../../../../quantum/audio/voices.c ****         //         case 30 ... 32:
+  63:../../../../quantum/audio/voices.c ****         //             frequency = frequency / 2;
+  64:../../../../quantum/audio/voices.c ****         //             note_timbre = TIMBRE_12;
+  65:../../../../quantum/audio/voices.c ****         //         break;
+  66:../../../../quantum/audio/voices.c **** 
+  67:../../../../quantum/audio/voices.c ****         //         case 10 ... 19:
+  68:../../../../quantum/audio/voices.c ****         //         case 25 ... 29:
+  69:../../../../quantum/audio/voices.c ****         //         case 33 ... 35:
+  70:../../../../quantum/audio/voices.c ****         //             frequency = frequency * 2;
+  71:../../../../quantum/audio/voices.c ****         //             note_timbre = TIMBRE_12;
+  72:../../../../quantum/audio/voices.c **** 	       //          break;
+  73:../../../../quantum/audio/voices.c **** 
+  74:../../../../quantum/audio/voices.c ****         //         default:
+  75:../../../../quantum/audio/voices.c ****         //             note_timbre = TIMBRE_12;
+  76:../../../../quantum/audio/voices.c ****         //         	break;
+  77:../../../../quantum/audio/voices.c ****         //     }
+  78:../../../../quantum/audio/voices.c **** 	       //  break;
+  79:../../../../quantum/audio/voices.c **** 
+  80:../../../../quantum/audio/voices.c ****         case duty_osc:
+  81:../../../../quantum/audio/voices.c ****             // This slows the loop down a substantial amount, so higher notes may freeze
+  82:../../../../quantum/audio/voices.c ****             polyphony_rate = 0;
+ 298               		.loc 1 82 0
+ 299 0142 1092 0000 		sts polyphony_rate,__zero_reg__
+ 300 0146 1092 0000 		sts polyphony_rate+1,__zero_reg__
+ 301 014a 1092 0000 		sts polyphony_rate+2,__zero_reg__
+ 302 014e 1092 0000 		sts polyphony_rate+3,__zero_reg__
+  83:../../../../quantum/audio/voices.c ****             switch (compensated_index) {
+  84:../../../../quantum/audio/voices.c ****                 default:
+  85:../../../../quantum/audio/voices.c ****                     #define OCS_SPEED 10
+  86:../../../../quantum/audio/voices.c ****                     #define OCS_AMP   .25
+  87:../../../../quantum/audio/voices.c ****                     // sine wave is slow
+  88:../../../../quantum/audio/voices.c ****                     // note_timbre = (sin((float)compensated_index/10000*OCS_SPEED) * OCS_AMP / 2) 
+  89:../../../../quantum/audio/voices.c ****                     // triangle wave is a bit faster
+  90:../../../../quantum/audio/voices.c ****                     note_timbre = (float)abs((compensated_index*OCS_SPEED % 3000) - 1500) * ( OCS_A
+ 303               		.loc 1 90 0
+ 304 0152 4AE0      		ldi r20,lo8(10)
+ 305 0154 469F      		mul r20,r22
+ 306 0156 9001      		movw r18,r0
+ 307 0158 479F      		mul r20,r23
+ 308 015a 300D      		add r19,r0
+ 309 015c 1124      		clr __zero_reg__
+ 310 015e C901      		movw r24,r18
+ 311 0160 68EB      		ldi r22,lo8(-72)
+ 312 0162 7BE0      		ldi r23,lo8(11)
+ 313               	.LVL18:
+ 314 0164 0E94 0000 		call __udivmodhi4
+ 315 0168 BC01      		movw r22,r24
+ 316 016a 6C5D      		subi r22,-36
+ 317 016c 7540      		sbci r23,5
+ 318 016e 77FF      		sbrs r23,7
+ 319 0170 00C0      		rjmp .L17
+ 320 0172 7195      		neg r23
+ 321 0174 6195      		neg r22
+ 322 0176 7109      		sbc r23,__zero_reg__
+ 323               	.L17:
+ 324 0178 8827      		clr r24
+ 325 017a 77FD      		sbrc r23,7
+ 326 017c 8095      		com r24
+ 327 017e 982F      		mov r25,r24
+ 328 0180 0E94 0000 		call __floatsisf
+ 329               	.LVL19:
+ 330 0184 2EE3      		ldi r18,lo8(62)
+ 331 0186 33EC      		ldi r19,lo8(-61)
+ 332 0188 4EE2      		ldi r20,lo8(46)
+ 333 018a 59E3      		ldi r21,lo8(57)
+ 334 018c 0E94 0000 		call __mulsf3
+ 335               	.LVL20:
+ 336 0190 20E0      		ldi r18,0
+ 337 0192 30E0      		ldi r19,0
+ 338 0194 40EC      		ldi r20,lo8(-64)
+ 339 0196 5EE3      		ldi r21,lo8(62)
+ 340 0198 0E94 0000 		call __addsf3
+ 341               	.LVL21:
+ 342               	.L25:
+ 343 019c 6093 0000 		sts note_timbre,r22
+ 344 01a0 7093 0000 		sts note_timbre+1,r23
+ 345 01a4 8093 0000 		sts note_timbre+2,r24
+ 346 01a8 9093 0000 		sts note_timbre+3,r25
+  91:../../../../quantum/audio/voices.c ****                 	break;
+ 347               		.loc 1 91 0
+ 348 01ac 00C0      		rjmp .L5
+ 349               	.LVL22:
+ 350               	.L10:
+  92:../../../../quantum/audio/voices.c ****             }
+  93:../../../../quantum/audio/voices.c **** 	        break;
+  94:../../../../quantum/audio/voices.c **** 
+  95:../../../../quantum/audio/voices.c ****         case duty_octave_down:
+  96:../../../../quantum/audio/voices.c ****             polyphony_rate = 0;
+ 351               		.loc 1 96 0
+ 352 01ae 1092 0000 		sts polyphony_rate,__zero_reg__
+ 353 01b2 1092 0000 		sts polyphony_rate+1,__zero_reg__
+ 354 01b6 1092 0000 		sts polyphony_rate+2,__zero_reg__
+ 355 01ba 1092 0000 		sts polyphony_rate+3,__zero_reg__
+  97:../../../../quantum/audio/voices.c ****             note_timbre = (envelope_index % 2) * .125 + .375 * 2;
+  98:../../../../quantum/audio/voices.c ****             if ((envelope_index % 4) == 0)
+ 356               		.loc 1 98 0
+ 357 01be CE01      		movw r24,r28
+ 358 01c0 8370      		andi r24,3
+ 359 01c2 9927      		clr r25
+ 360 01c4 892B      		or r24,r25
+ 361 01c6 01F0      		breq .L18
+  97:../../../../quantum/audio/voices.c ****             note_timbre = (envelope_index % 2) * .125 + .375 * 2;
+ 362               		.loc 1 97 0
+ 363 01c8 BE01      		movw r22,r28
+ 364               	.LVL23:
+ 365 01ca 6170      		andi r22,1
+ 366 01cc 7727      		clr r23
+ 367 01ce 80E0      		ldi r24,0
+ 368 01d0 90E0      		ldi r25,0
+ 369 01d2 0E94 0000 		call __floatunsisf
+ 370               	.LVL24:
+ 371 01d6 20E0      		ldi r18,0
+ 372 01d8 30E0      		ldi r19,0
+ 373 01da 40E0      		ldi r20,0
+ 374 01dc 5EE3      		ldi r21,lo8(62)
+ 375 01de 0E94 0000 		call __mulsf3
+ 376               	.LVL25:
+ 377 01e2 20E0      		ldi r18,0
+ 378 01e4 30E0      		ldi r19,0
+ 379 01e6 40E4      		ldi r20,lo8(64)
+ 380 01e8 5FE3      		ldi r21,lo8(63)
+ 381 01ea 0E94 0000 		call __addsf3
+ 382               	.LVL26:
+ 383 01ee 6093 0000 		sts note_timbre,r22
+ 384 01f2 7093 0000 		sts note_timbre+1,r23
+ 385 01f6 8093 0000 		sts note_timbre+2,r24
+ 386 01fa 9093 0000 		sts note_timbre+3,r25
+ 387 01fe 00C0      		rjmp .L19
+ 388               	.LVL27:
+ 389               	.L18:
+  99:../../../../quantum/audio/voices.c ****                 note_timbre = 0.5;
+ 390               		.loc 1 99 0
+ 391 0200 80E0      		ldi r24,0
+ 392 0202 90E0      		ldi r25,0
+ 393 0204 A0E0      		ldi r26,0
+ 394 0206 BFE3      		ldi r27,lo8(63)
+ 395 0208 8093 0000 		sts note_timbre,r24
+ 396 020c 9093 0000 		sts note_timbre+1,r25
+ 397 0210 A093 0000 		sts note_timbre+2,r26
+ 398 0214 B093 0000 		sts note_timbre+3,r27
+ 399               	.LVL28:
+ 400               	.L19:
+ 100:../../../../quantum/audio/voices.c ****             if ((envelope_index % 8) == 0)
+ 401               		.loc 1 100 0
+ 402 0218 C770      		andi r28,7
+ 403 021a DD27      		clr r29
+ 404 021c CD2B      		or r28,r29
+ 405 021e 01F0      		breq .+2
+ 406 0220 00C0      		rjmp .L5
+ 407               	.L24:
+ 101:../../../../quantum/audio/voices.c ****                 note_timbre = 0;
+ 408               		.loc 1 101 0
+ 409 0222 1092 0000 		sts note_timbre,__zero_reg__
+ 410 0226 1092 0000 		sts note_timbre+1,__zero_reg__
+ 411 022a 1092 0000 		sts note_timbre+2,__zero_reg__
+ 412 022e 1092 0000 		sts note_timbre+3,__zero_reg__
+ 413 0232 00C0      		rjmp .L5
+ 414               	.LVL29:
+ 415               	.L11:
+ 102:../../../../quantum/audio/voices.c ****             break;
+ 103:../../../../quantum/audio/voices.c ****         case delayed_vibrato:
+ 104:../../../../quantum/audio/voices.c ****             polyphony_rate = 0;
+ 416               		.loc 1 104 0
+ 417 0234 1092 0000 		sts polyphony_rate,__zero_reg__
+ 418 0238 1092 0000 		sts polyphony_rate+1,__zero_reg__
+ 419 023c 1092 0000 		sts polyphony_rate+2,__zero_reg__
+ 420 0240 1092 0000 		sts polyphony_rate+3,__zero_reg__
+ 105:../../../../quantum/audio/voices.c ****             note_timbre = TIMBRE_50;
+ 421               		.loc 1 105 0
+ 422 0244 00E0      		ldi r16,0
+ 423 0246 10E0      		ldi r17,0
+ 424 0248 20E0      		ldi r18,0
+ 425 024a 3FE3      		ldi r19,lo8(63)
+ 426 024c 0093 0000 		sts note_timbre,r16
+ 427 0250 1093 0000 		sts note_timbre+1,r17
+ 428 0254 2093 0000 		sts note_timbre+2,r18
+ 429 0258 3093 0000 		sts note_timbre+3,r19
+ 106:../../../../quantum/audio/voices.c ****             #define VOICE_VIBRATO_DELAY 150
+ 107:../../../../quantum/audio/voices.c ****             #define VOICE_VIBRATO_SPEED 50
+ 108:../../../../quantum/audio/voices.c ****             switch (compensated_index) {
+ 430               		.loc 1 108 0
+ 431 025c 6739      		cpi r22,-105
+ 432 025e 7105      		cpc r23,__zero_reg__
+ 433 0260 00F0      		brlo .L5
+ 109:../../../../quantum/audio/voices.c ****                 case 0 ... VOICE_VIBRATO_DELAY:
+ 110:../../../../quantum/audio/voices.c ****                     break;
+ 111:../../../../quantum/audio/voices.c ****                 default:
+ 112:../../../../quantum/audio/voices.c ****                     frequency = frequency * vibrato_lut[(int)fmod((((float)compensated_index - (VOI
+ 434               		.loc 1 112 0
+ 435 0262 80E0      		ldi r24,0
+ 436 0264 90E0      		ldi r25,0
+ 437 0266 0E94 0000 		call __floatunsisf
+ 438               	.LVL30:
+ 439 026a 20E0      		ldi r18,0
+ 440 026c 30E0      		ldi r19,0
+ 441 026e 47E1      		ldi r20,lo8(23)
+ 442 0270 53E4      		ldi r21,lo8(67)
+ 443 0272 0E94 0000 		call __subsf3
+ 444               	.LVL31:
+ 445 0276 20E0      		ldi r18,0
+ 446 0278 30E0      		ldi r19,0
+ 447 027a 4AE7      		ldi r20,lo8(122)
+ 448 027c 54E4      		ldi r21,lo8(68)
+ 449 027e 0E94 0000 		call __divsf3
+ 450               	.LVL32:
+ 451 0282 20E0      		ldi r18,0
+ 452 0284 30E0      		ldi r19,0
+ 453 0286 48E4      		ldi r20,lo8(72)
+ 454 0288 52E4      		ldi r21,lo8(66)
+ 455 028a 0E94 0000 		call __mulsf3
+ 456               	.LVL33:
+ 457 028e 20E0      		ldi r18,0
+ 458 0290 30E0      		ldi r19,0
+ 459 0292 40EA      		ldi r20,lo8(-96)
+ 460 0294 51E4      		ldi r21,lo8(65)
+ 461 0296 0E94 0000 		call fmod
+ 462               	.LVL34:
+ 463 029a 0E94 0000 		call __fixsfsi
+ 464               	.LVL35:
+ 465 029e 660F      		lsl r22
+ 466 02a0 771F      		rol r23
+ 467 02a2 660F      		lsl r22
+ 468 02a4 771F      		rol r23
+ 469 02a6 FB01      		movw r30,r22
+ 470 02a8 E050      		subi r30,lo8(-(vibrato_lut))
+ 471 02aa F040      		sbci r31,hi8(-(vibrato_lut))
+ 472 02ac 2081      		ld r18,Z
+ 473 02ae 3181      		ldd r19,Z+1
+ 474 02b0 4281      		ldd r20,Z+2
+ 475 02b2 5381      		ldd r21,Z+3
+ 476 02b4 C701      		movw r24,r14
+ 477 02b6 B601      		movw r22,r12
+ 478 02b8 0E94 0000 		call __mulsf3
+ 479               	.LVL36:
+ 480 02bc 6B01      		movw r12,r22
+ 481 02be 7C01      		movw r14,r24
+ 482               	.LVL37:
+ 483               	.L5:
+ 113:../../../../quantum/audio/voices.c ****                     break;
+ 114:../../../../quantum/audio/voices.c ****             }
+ 115:../../../../quantum/audio/voices.c ****             break;
+ 116:../../../../quantum/audio/voices.c ****         // case delayed_vibrato_octave:
+ 117:../../../../quantum/audio/voices.c ****         //     polyphony_rate = 0;
+ 118:../../../../quantum/audio/voices.c ****         //     if ((envelope_index % 2) == 1) {
+ 119:../../../../quantum/audio/voices.c ****         //         note_timbre = 0.55;
+ 120:../../../../quantum/audio/voices.c ****         //     } else {
+ 121:../../../../quantum/audio/voices.c ****         //         note_timbre = 0.45;
+ 122:../../../../quantum/audio/voices.c ****         //     }
+ 123:../../../../quantum/audio/voices.c ****         //     #define VOICE_VIBRATO_DELAY 150
+ 124:../../../../quantum/audio/voices.c ****         //     #define VOICE_VIBRATO_SPEED 50
+ 125:../../../../quantum/audio/voices.c ****         //     switch (compensated_index) {
+ 126:../../../../quantum/audio/voices.c ****         //         case 0 ... VOICE_VIBRATO_DELAY:
+ 127:../../../../quantum/audio/voices.c ****         //             break;
+ 128:../../../../quantum/audio/voices.c ****         //         default:
+ 129:../../../../quantum/audio/voices.c ****         //             frequency = frequency * VIBRATO_LUT[(int)fmod((((float)compensated_index - (
+ 130:../../../../quantum/audio/voices.c ****         //             break;
+ 131:../../../../quantum/audio/voices.c ****         //     }
+ 132:../../../../quantum/audio/voices.c ****         //     break;
+ 133:../../../../quantum/audio/voices.c ****         // case duty_fifth_down:
+ 134:../../../../quantum/audio/voices.c ****         //     note_timbre = 0.5;
+ 135:../../../../quantum/audio/voices.c ****         //     if ((envelope_index % 3) == 0)
+ 136:../../../../quantum/audio/voices.c ****         //         note_timbre = 0.75;
+ 137:../../../../quantum/audio/voices.c ****         //     break;
+ 138:../../../../quantum/audio/voices.c ****         // case duty_fourth_down:
+ 139:../../../../quantum/audio/voices.c ****         //     note_timbre = 0.0;
+ 140:../../../../quantum/audio/voices.c ****         //     if ((envelope_index % 12) == 0)
+ 141:../../../../quantum/audio/voices.c ****         //         note_timbre = 0.75;
+ 142:../../../../quantum/audio/voices.c ****         //     if (((envelope_index % 12) % 4) != 1)
+ 143:../../../../quantum/audio/voices.c ****         //         note_timbre = 0.75;
+ 144:../../../../quantum/audio/voices.c ****         //     break;
+ 145:../../../../quantum/audio/voices.c ****         // case duty_third_down:
+ 146:../../../../quantum/audio/voices.c ****         //     note_timbre = 0.5;
+ 147:../../../../quantum/audio/voices.c ****         //     if ((envelope_index % 5) == 0)
+ 148:../../../../quantum/audio/voices.c ****         //         note_timbre = 0.75;
+ 149:../../../../quantum/audio/voices.c ****         //     break;
+ 150:../../../../quantum/audio/voices.c ****         // case duty_fifth_third_down:
+ 151:../../../../quantum/audio/voices.c ****         //     note_timbre = 0.5;
+ 152:../../../../quantum/audio/voices.c ****         //     if ((envelope_index % 5) == 0)
+ 153:../../../../quantum/audio/voices.c ****         //         note_timbre = 0.75;
+ 154:../../../../quantum/audio/voices.c ****         //     if ((envelope_index % 3) == 0)
+ 155:../../../../quantum/audio/voices.c ****         //         note_timbre = 0.25;
+ 156:../../../../quantum/audio/voices.c ****         //     break;
+ 157:../../../../quantum/audio/voices.c **** 
+ 158:../../../../quantum/audio/voices.c **** 		default:
+ 159:../../../../quantum/audio/voices.c ****    			break;
+ 160:../../../../quantum/audio/voices.c ****     }
+ 161:../../../../quantum/audio/voices.c **** 
+ 162:../../../../quantum/audio/voices.c ****     return frequency;
+ 163:../../../../quantum/audio/voices.c **** }
+ 484               		.loc 1 163 0
+ 485 02c0 C701      		movw r24,r14
+ 486 02c2 B601      		movw r22,r12
+ 487               	/* epilogue start */
+ 488 02c4 DF91      		pop r29
+ 489 02c6 CF91      		pop r28
+ 490 02c8 1F91      		pop r17
+ 491 02ca 0F91      		pop r16
+ 492 02cc FF90      		pop r15
+ 493 02ce EF90      		pop r14
+ 494 02d0 DF90      		pop r13
+ 495 02d2 CF90      		pop r12
+ 496               	.LVL38:
+ 497 02d4 BF90      		pop r11
+ 498 02d6 AF90      		pop r10
+ 499 02d8 9F90      		pop r9
+ 500 02da 8F90      		pop r8
+ 501 02dc 0895      		ret
+ 502               		.cfi_endproc
+ 503               	.LFE110:
+ 505               	.global	voice
+ 506               		.section	.bss.voice,"aw",@nobits
+ 509               	voice:
+ 510 0000 00        		.zero	1
+ 511               		.text
+ 512               	.Letext0:
+ 513               		.file 2 "/usr/local/Cellar/avr-gcc/4.9.3/avr/include/stdint.h"
+ 514               		.file 3 "../../../../quantum/audio/voices.h"
+ 515               		.file 4 "../../../../quantum/audio/luts.h"
+ 516               		.file 5 "../../../../tmk_core/protocol/lufa/LUFA-git/LUFA/Drivers/USB/Core/USBTask.h"
+ 517               		.file 6 "/usr/local/Cellar/avr-gcc/4.9.3/avr/include/math.h"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 voices.c
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//cconzN01.s:2      *ABS*:000000000000003e __SP_H__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//cconzN01.s:3      *ABS*:000000000000003d __SP_L__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//cconzN01.s:4      *ABS*:000000000000003f __SREG__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//cconzN01.s:5      *ABS*:0000000000000000 __tmp_reg__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//cconzN01.s:6      *ABS*:0000000000000001 __zero_reg__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//cconzN01.s:13     .text.set_voice:0000000000000000 set_voice
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//cconzN01.s:509    .bss.voice:0000000000000000 voice
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//cconzN01.s:32     .text.voice_iterate:0000000000000000 voice_iterate
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//cconzN01.s:55     .text.voice_deiterate:0000000000000000 voice_deiterate
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//cconzN01.s:86     .text.voice_envelope:0000000000000000 voice_envelope
+
+UNDEFINED SYMBOLS
+__divmodhi4
+__floatunsisf
+__divsf3
+__mulsf3
+__fixunssfsi
+__subsf3
+__floatsisf
+__addsf3
+__fixsfsi
+envelope_index
+note_timbre
+polyphony_rate
+__udivmodhi4
+fmod
+vibrato_lut
+__do_clear_bss
