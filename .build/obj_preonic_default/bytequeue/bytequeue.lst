@@ -1,0 +1,366 @@
+   1               		.file	"bytequeue.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   7               		.text
+   8               	.Ltext0:
+   9               		.cfi_sections	.debug_frame
+  10               		.section	.text.bytequeue_init,"ax",@progbits
+  11               	.global	bytequeue_init
+  13               	bytequeue_init:
+  14               	.LFB0:
+  15               		.file 1 "../../tmk_core/protocol/midi/bytequeue/bytequeue.c"
+   1:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** //this is a single reader [maybe multiple writer?] byte queue
+   2:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** //Copyright 2008 Alex Norman
+   3:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** //writen by Alex Norman 
+   4:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** //
+   5:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** //This file is part of avr-bytequeue.
+   6:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** //
+   7:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** //avr-bytequeue is free software: you can redistribute it and/or modify
+   8:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** //it under the terms of the GNU General Public License as published by
+   9:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** //the Free Software Foundation, either version 3 of the License, or
+  10:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** //(at your option) any later version.
+  11:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** //
+  12:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** //avr-bytequeue is distributed in the hope that it will be useful,
+  13:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** //but WITHOUT ANY WARRANTY; without even the implied warranty of
+  14:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** //MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  15:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** //GNU General Public License for more details.
+  16:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** //
+  17:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** //You should have received a copy of the GNU General Public License
+  18:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** //along with avr-bytequeue.  If not, see <http://www.gnu.org/licenses/>.
+  19:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** 
+  20:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** #include "bytequeue.h"
+  21:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** #include "interrupt_setting.h"
+  22:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** 
+  23:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** void bytequeue_init(byteQueue_t * queue, uint8_t * dataArray, byteQueueIndex_t arrayLen){
+  16               		.loc 1 23 0
+  17               		.cfi_startproc
+  18               	.LVL0:
+  19               	/* prologue: function */
+  20               	/* frame size = 0 */
+  21               	/* stack size = 0 */
+  22               	.L__stack_usage = 0
+  23 0000 FC01      		movw r30,r24
+  24:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****    queue->length = arrayLen;
+  24               		.loc 1 24 0
+  25 0002 4283      		std Z+2,r20
+  25:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****    queue->data = dataArray;
+  26               		.loc 1 25 0
+  27 0004 7483      		std Z+4,r23
+  28 0006 6383      		std Z+3,r22
+  26:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****    queue->start = queue->end = 0;
+  29               		.loc 1 26 0
+  30 0008 1182      		std Z+1,__zero_reg__
+  31 000a 1082      		st Z,__zero_reg__
+  32 000c 0895      		ret
+  33               		.cfi_endproc
+  34               	.LFE0:
+  36               		.section	.text.bytequeue_enqueue,"ax",@progbits
+  37               	.global	bytequeue_enqueue
+  39               	bytequeue_enqueue:
+  40               	.LFB1:
+  27:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** }
+  28:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** 
+  29:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** bool bytequeue_enqueue(byteQueue_t * queue, uint8_t item){
+  41               		.loc 1 29 0
+  42               		.cfi_startproc
+  43               	.LVL1:
+  44 0000 1F93      		push r17
+  45               	.LCFI0:
+  46               		.cfi_def_cfa_offset 3
+  47               		.cfi_offset 17, -2
+  48 0002 CF93      		push r28
+  49               	.LCFI1:
+  50               		.cfi_def_cfa_offset 4
+  51               		.cfi_offset 28, -3
+  52 0004 DF93      		push r29
+  53               	.LCFI2:
+  54               		.cfi_def_cfa_offset 5
+  55               		.cfi_offset 29, -4
+  56               	/* prologue: function */
+  57               	/* frame size = 0 */
+  58               	/* stack size = 3 */
+  59               	.L__stack_usage = 3
+  60 0006 EC01      		movw r28,r24
+  61 0008 162F      		mov r17,r22
+  30:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****    interrupt_setting_t setting = store_and_clear_interrupt();
+  62               		.loc 1 30 0
+  63 000a 0E94 0000 		call store_and_clear_interrupt
+  64               	.LVL2:
+  65 000e E82F      		mov r30,r24
+  66               	.LVL3:
+  31:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****    //full
+  32:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****    if(((queue->end + 1) % queue->length) == queue->start){
+  67               		.loc 1 32 0
+  68 0010 2981      		ldd r18,Y+1
+  69 0012 30E0      		ldi r19,0
+  70 0014 C901      		movw r24,r18
+  71               	.LVL4:
+  72 0016 0196      		adiw r24,1
+  73 0018 4A81      		ldd r20,Y+2
+  74 001a 642F      		mov r22,r20
+  75 001c 70E0      		ldi r23,0
+  76 001e 0E94 0000 		call __divmodhi4
+  77 0022 4881      		ld r20,Y
+  78 0024 50E0      		ldi r21,0
+  79 0026 8417      		cp r24,r20
+  80 0028 9507      		cpc r25,r21
+  81 002a 01F4      		brne .L3
+  33:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****       restore_interrupt_setting(setting);
+  82               		.loc 1 33 0
+  83 002c 8E2F      		mov r24,r30
+  84 002e 0E94 0000 		call restore_interrupt_setting
+  85               	.LVL5:
+  34:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****       return false;
+  86               		.loc 1 34 0
+  87 0032 80E0      		ldi r24,0
+  88 0034 00C0      		rjmp .L4
+  89               	.LVL6:
+  90               	.L3:
+  35:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****    } else {
+  36:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****       queue->data[queue->end] = item;
+  91               		.loc 1 36 0
+  92 0036 8B81      		ldd r24,Y+3
+  93 0038 9C81      		ldd r25,Y+4
+  94 003a DC01      		movw r26,r24
+  95 003c A20F      		add r26,r18
+  96 003e B31F      		adc r27,r19
+  97 0040 1C93      		st X,r17
+  37:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****       queue->end = (queue->end + 1) % queue->length;
+  98               		.loc 1 37 0
+  99 0042 2981      		ldd r18,Y+1
+ 100 0044 30E0      		ldi r19,0
+ 101 0046 C901      		movw r24,r18
+ 102 0048 0196      		adiw r24,1
+ 103 004a 6A81      		ldd r22,Y+2
+ 104 004c 70E0      		ldi r23,0
+ 105 004e 0E94 0000 		call __divmodhi4
+ 106 0052 8983      		std Y+1,r24
+  38:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****       restore_interrupt_setting(setting);
+ 107               		.loc 1 38 0
+ 108 0054 8E2F      		mov r24,r30
+ 109 0056 0E94 0000 		call restore_interrupt_setting
+ 110               	.LVL7:
+  39:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****       return true;
+ 111               		.loc 1 39 0
+ 112 005a 81E0      		ldi r24,lo8(1)
+ 113               	.L4:
+ 114               	/* epilogue start */
+  40:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****    }
+  41:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** }
+ 115               		.loc 1 41 0
+ 116 005c DF91      		pop r29
+ 117 005e CF91      		pop r28
+ 118               	.LVL8:
+ 119 0060 1F91      		pop r17
+ 120               	.LVL9:
+ 121 0062 0895      		ret
+ 122               		.cfi_endproc
+ 123               	.LFE1:
+ 125               		.section	.text.bytequeue_length,"ax",@progbits
+ 126               	.global	bytequeue_length
+ 128               	bytequeue_length:
+ 129               	.LFB2:
+  42:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** 
+  43:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** byteQueueIndex_t bytequeue_length(byteQueue_t * queue){
+ 130               		.loc 1 43 0
+ 131               		.cfi_startproc
+ 132               	.LVL10:
+ 133 0000 0F93      		push r16
+ 134               	.LCFI3:
+ 135               		.cfi_def_cfa_offset 3
+ 136               		.cfi_offset 16, -2
+ 137 0002 1F93      		push r17
+ 138               	.LCFI4:
+ 139               		.cfi_def_cfa_offset 4
+ 140               		.cfi_offset 17, -3
+ 141 0004 CF93      		push r28
+ 142               	.LCFI5:
+ 143               		.cfi_def_cfa_offset 5
+ 144               		.cfi_offset 28, -4
+ 145               	/* prologue: function */
+ 146               	/* frame size = 0 */
+ 147               	/* stack size = 3 */
+ 148               	.L__stack_usage = 3
+ 149 0006 8C01      		movw r16,r24
+  44:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****    byteQueueIndex_t len;
+  45:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****    interrupt_setting_t setting = store_and_clear_interrupt();
+ 150               		.loc 1 45 0
+ 151 0008 0E94 0000 		call store_and_clear_interrupt
+ 152               	.LVL11:
+  46:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****    if(queue->end >= queue->start)
+ 153               		.loc 1 46 0
+ 154 000c F801      		movw r30,r16
+ 155 000e C181      		ldd r28,Z+1
+ 156 0010 2081      		ld r18,Z
+ 157 0012 C217      		cp r28,r18
+ 158 0014 00F4      		brsh .L9
+ 159 0016 F801      		movw r30,r16
+ 160 0018 9281      		ldd r25,Z+2
+ 161 001a C90F      		add r28,r25
+ 162               	.L9:
+  47:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****       len = queue->end - queue->start;
+  48:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****    else
+  49:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****       len = (queue->length - queue->start) + queue->end;
+ 163               		.loc 1 49 0
+ 164 001c C21B      		sub r28,r18
+ 165               	.LVL12:
+  50:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****    restore_interrupt_setting(setting);
+ 166               		.loc 1 50 0
+ 167 001e 0E94 0000 		call restore_interrupt_setting
+ 168               	.LVL13:
+  51:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****    return len;
+  52:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** }
+ 169               		.loc 1 52 0
+ 170 0022 8C2F      		mov r24,r28
+ 171               	/* epilogue start */
+ 172 0024 CF91      		pop r28
+ 173               	.LVL14:
+ 174 0026 1F91      		pop r17
+ 175 0028 0F91      		pop r16
+ 176               	.LVL15:
+ 177 002a 0895      		ret
+ 178               		.cfi_endproc
+ 179               	.LFE2:
+ 181               		.section	.text.bytequeue_get,"ax",@progbits
+ 182               	.global	bytequeue_get
+ 184               	bytequeue_get:
+ 185               	.LFB3:
+  53:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** 
+  54:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** //we don't need to avoid interrupts if there is only one reader
+  55:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** uint8_t bytequeue_get(byteQueue_t * queue, byteQueueIndex_t index){
+ 186               		.loc 1 55 0
+ 187               		.cfi_startproc
+ 188               	.LVL16:
+ 189               	/* prologue: function */
+ 190               	/* frame size = 0 */
+ 191               	/* stack size = 0 */
+ 192               	.L__stack_usage = 0
+ 193 0000 FC01      		movw r30,r24
+  56:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****    return queue->data[(queue->start + index) % queue->length];
+ 194               		.loc 1 56 0
+ 195 0002 8081      		ld r24,Z
+ 196               	.LVL17:
+ 197 0004 70E0      		ldi r23,0
+ 198 0006 9B01      		movw r18,r22
+ 199 0008 280F      		add r18,r24
+ 200 000a 311D      		adc r19,__zero_reg__
+ 201 000c C901      		movw r24,r18
+ 202 000e 6281      		ldd r22,Z+2
+ 203               	.LVL18:
+ 204 0010 70E0      		ldi r23,0
+ 205 0012 0E94 0000 		call __divmodhi4
+ 206 0016 0380      		ldd __tmp_reg__,Z+3
+ 207 0018 F481      		ldd r31,Z+4
+ 208 001a E02D      		mov r30,__tmp_reg__
+ 209               	.LVL19:
+ 210 001c E80F      		add r30,r24
+ 211 001e F91F      		adc r31,r25
+  57:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** }
+ 212               		.loc 1 57 0
+ 213 0020 8081      		ld r24,Z
+ 214 0022 0895      		ret
+ 215               		.cfi_endproc
+ 216               	.LFE3:
+ 218               		.section	.text.bytequeue_remove,"ax",@progbits
+ 219               	.global	bytequeue_remove
+ 221               	bytequeue_remove:
+ 222               	.LFB4:
+  58:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** 
+  59:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** //we just update the start index to remove elements
+  60:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** void bytequeue_remove(byteQueue_t * queue, byteQueueIndex_t numToRemove){
+ 223               		.loc 1 60 0
+ 224               		.cfi_startproc
+ 225               	.LVL20:
+ 226 0000 0F93      		push r16
+ 227               	.LCFI6:
+ 228               		.cfi_def_cfa_offset 3
+ 229               		.cfi_offset 16, -2
+ 230 0002 1F93      		push r17
+ 231               	.LCFI7:
+ 232               		.cfi_def_cfa_offset 4
+ 233               		.cfi_offset 17, -3
+ 234 0004 CF93      		push r28
+ 235               	.LCFI8:
+ 236               		.cfi_def_cfa_offset 5
+ 237               		.cfi_offset 28, -4
+ 238 0006 DF93      		push r29
+ 239               	.LCFI9:
+ 240               		.cfi_def_cfa_offset 6
+ 241               		.cfi_offset 29, -5
+ 242 0008 1F92      		push __zero_reg__
+ 243               	.LCFI10:
+ 244               		.cfi_def_cfa_offset 7
+ 245 000a CDB7      		in r28,__SP_L__
+ 246 000c DEB7      		in r29,__SP_H__
+ 247               	.LCFI11:
+ 248               		.cfi_def_cfa_register 28
+ 249               	/* prologue: function */
+ 250               	/* frame size = 1 */
+ 251               	/* stack size = 5 */
+ 252               	.L__stack_usage = 5
+ 253 000e 8C01      		movw r16,r24
+  61:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****    interrupt_setting_t setting = store_and_clear_interrupt();
+ 254               		.loc 1 61 0
+ 255 0010 6983      		std Y+1,r22
+ 256 0012 0E94 0000 		call store_and_clear_interrupt
+ 257               	.LVL21:
+ 258 0016 482F      		mov r20,r24
+ 259               	.LVL22:
+  62:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****    queue->start = (queue->start + numToRemove) % queue->length;
+ 260               		.loc 1 62 0
+ 261 0018 F801      		movw r30,r16
+ 262 001a 8081      		ld r24,Z
+ 263 001c 6981      		ldd r22,Y+1
+ 264 001e 262F      		mov r18,r22
+ 265 0020 30E0      		ldi r19,0
+ 266 0022 B901      		movw r22,r18
+ 267 0024 680F      		add r22,r24
+ 268 0026 711D      		adc r23,__zero_reg__
+ 269 0028 CB01      		movw r24,r22
+ 270 002a 6281      		ldd r22,Z+2
+ 271 002c 70E0      		ldi r23,0
+ 272 002e 0E94 0000 		call __divmodhi4
+ 273 0032 8083      		st Z,r24
+  63:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****    restore_interrupt_setting(setting);
+ 274               		.loc 1 63 0
+ 275 0034 842F      		mov r24,r20
+ 276               	/* epilogue start */
+  64:../../tmk_core/protocol/midi/bytequeue/bytequeue.c **** }
+ 277               		.loc 1 64 0
+ 278 0036 0F90      		pop __tmp_reg__
+ 279 0038 DF91      		pop r29
+ 280 003a CF91      		pop r28
+ 281 003c 1F91      		pop r17
+ 282 003e 0F91      		pop r16
+ 283               	.LVL23:
+  63:../../tmk_core/protocol/midi/bytequeue/bytequeue.c ****    restore_interrupt_setting(setting);
+ 284               		.loc 1 63 0
+ 285 0040 0C94 0000 		jmp restore_interrupt_setting
+ 286               	.LVL24:
+ 287               		.cfi_endproc
+ 288               	.LFE4:
+ 290               		.text
+ 291               	.Letext0:
+ 292               		.file 2 "/usr/local/Cellar/avr-gcc/4.9.3/avr/include/stdint.h"
+ 293               		.file 3 "../../tmk_core/protocol/midi/bytequeue/bytequeue.h"
+ 294               		.file 4 "../../tmk_core/protocol/midi/bytequeue/interrupt_setting.h"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 bytequeue.c
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccxHoEPr.s:2      *ABS*:000000000000003e __SP_H__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccxHoEPr.s:3      *ABS*:000000000000003d __SP_L__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccxHoEPr.s:4      *ABS*:000000000000003f __SREG__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccxHoEPr.s:5      *ABS*:0000000000000000 __tmp_reg__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccxHoEPr.s:6      *ABS*:0000000000000001 __zero_reg__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccxHoEPr.s:13     .text.bytequeue_init:0000000000000000 bytequeue_init
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccxHoEPr.s:39     .text.bytequeue_enqueue:0000000000000000 bytequeue_enqueue
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccxHoEPr.s:128    .text.bytequeue_length:0000000000000000 bytequeue_length
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccxHoEPr.s:184    .text.bytequeue_get:0000000000000000 bytequeue_get
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//ccxHoEPr.s:221    .text.bytequeue_remove:0000000000000000 bytequeue_remove
+
+UNDEFINED SYMBOLS
+store_and_clear_interrupt
+__divmodhi4
+restore_interrupt_setting

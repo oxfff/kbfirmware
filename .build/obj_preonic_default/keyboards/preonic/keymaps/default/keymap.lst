@@ -1,0 +1,899 @@
+   1               		.file	"keymap.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   7               		.text
+   8               	.Ltext0:
+   9               		.cfi_sections	.debug_frame
+  10               		.section	.text.persistant_default_layer_set,"ax",@progbits
+  11               	.global	persistant_default_layer_set
+  13               	persistant_default_layer_set:
+  14               	.LFB107:
+  15               		.file 1 "../../keyboards/preonic/keymaps/default/keymap.c"
+   1:../../keyboards/preonic/keymaps/default/keymap.c **** #include "preonic.h"
+   2:../../keyboards/preonic/keymaps/default/keymap.c **** #include "action_layer.h"
+   3:../../keyboards/preonic/keymaps/default/keymap.c **** #include "eeconfig.h"
+   4:../../keyboards/preonic/keymaps/default/keymap.c **** #ifdef AUDIO_ENABLE
+   5:../../keyboards/preonic/keymaps/default/keymap.c ****   #include "audio.h"
+   6:../../keyboards/preonic/keymaps/default/keymap.c **** #endif
+   7:../../keyboards/preonic/keymaps/default/keymap.c **** 
+   8:../../keyboards/preonic/keymaps/default/keymap.c **** // Each layer gets a name for readability, which is then used in the keymap matrix below.
+   9:../../keyboards/preonic/keymaps/default/keymap.c **** // The underscores don't mean anything - you can have a layer called STUFF or any other name.
+  10:../../keyboards/preonic/keymaps/default/keymap.c **** // Layer names don't all need to be of the same length, obviously, and you can also skip them
+  11:../../keyboards/preonic/keymaps/default/keymap.c **** // entirely and just use numbers.
+  12:../../keyboards/preonic/keymaps/default/keymap.c **** 
+  13:../../keyboards/preonic/keymaps/default/keymap.c **** #define _HHKB 0
+  14:../../keyboards/preonic/keymaps/default/keymap.c **** #define _QWERTY _HHKB 
+  15:../../keyboards/preonic/keymaps/default/keymap.c **** #define _COLEMAK 1
+  16:../../keyboards/preonic/keymaps/default/keymap.c **** #define _DVORAK 2
+  17:../../keyboards/preonic/keymaps/default/keymap.c **** #define _LOWER 3
+  18:../../keyboards/preonic/keymaps/default/keymap.c **** #define _RAISE 4
+  19:../../keyboards/preonic/keymaps/default/keymap.c **** #define _ADJUST 16
+  20:../../keyboards/preonic/keymaps/default/keymap.c **** 
+  21:../../keyboards/preonic/keymaps/default/keymap.c **** enum preonic_keycodes {
+  22:../../keyboards/preonic/keymaps/default/keymap.c ****   QWERTY = SAFE_RANGE,
+  23:../../keyboards/preonic/keymaps/default/keymap.c ****   COLEMAK,
+  24:../../keyboards/preonic/keymaps/default/keymap.c ****   DVORAK,
+  25:../../keyboards/preonic/keymaps/default/keymap.c ****   LOWER,
+  26:../../keyboards/preonic/keymaps/default/keymap.c ****   RAISE,
+  27:../../keyboards/preonic/keymaps/default/keymap.c ****   BACKLIT
+  28:../../keyboards/preonic/keymaps/default/keymap.c **** };
+  29:../../keyboards/preonic/keymaps/default/keymap.c **** 
+  30:../../keyboards/preonic/keymaps/default/keymap.c **** // Fillers to make layering more clear
+  31:../../keyboards/preonic/keymaps/default/keymap.c **** #define _______ KC_TRNS
+  32:../../keyboards/preonic/keymaps/default/keymap.c **** #define XXXXXXX KC_NO
+  33:../../keyboards/preonic/keymaps/default/keymap.c **** 
+  34:../../keyboards/preonic/keymaps/default/keymap.c **** const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+  35:../../keyboards/preonic/keymaps/default/keymap.c **** 
+  36:../../keyboards/preonic/keymaps/default/keymap.c **** // KC_MINS
+  37:../../keyboards/preonic/keymaps/default/keymap.c **** /* HHKB
+  38:../../keyboards/preonic/keymaps/default/keymap.c ****  * ,-----------------------------------------------------------------------------------.
+  39:../../keyboards/preonic/keymaps/default/keymap.c ****  * | ESC  |   1  |   2  |   3  |   4  |   5  |   6  |   7  |   8  |   9  |   0  |  -   |
+  40:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+  41:../../keyboards/preonic/keymaps/default/keymap.c ****  * | Tab  |   Q  |   W  |   E  |   R  |   T  |   Y  |   U  |   I  |   O  |   P  | Bksp |
+  42:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+-------------+------+------+------+------+------|
+  43:../../keyboards/preonic/keymaps/default/keymap.c ****  * | Ctrl |   A  |   S  |   D  |   F  |   G  |   H  |   J  |   K  |   L  |   ;  |Enter |
+  44:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------|------+------+------+------+------+------|
+  45:../../keyboards/preonic/keymaps/default/keymap.c ****  * | Shift|   Z  |   X  |   C  |   V  |   B  |   N  |   M  |   ,  |   .  |   /  |   "  |
+  46:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+  47:../../keyboards/preonic/keymaps/default/keymap.c ****  * | Brite| Esc  | Alt  | Win  |Lower |    Space    |Raise | Left | Down |  Up  |Right |
+  48:../../keyboards/preonic/keymaps/default/keymap.c ****  * `-----------------------------------------------------------------------------------'
+  49:../../keyboards/preonic/keymaps/default/keymap.c ****  */
+  50:../../keyboards/preonic/keymaps/default/keymap.c **** 
+  51:../../keyboards/preonic/keymaps/default/keymap.c ****     
+  52:../../keyboards/preonic/keymaps/default/keymap.c **** //KC_GRV
+  53:../../keyboards/preonic/keymaps/default/keymap.c **** 
+  54:../../keyboards/preonic/keymaps/default/keymap.c **** [_HHKB] = {
+  55:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_ESC,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0, 
+  56:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P, 
+  57:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_LCTL,  KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SC
+  58:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLS
+  59:../../keyboards/preonic/keymaps/default/keymap.c ****   {BACKLIT, KC_ESC, KC_LALT, KC_LGUI, LOWER,   KC_SPC,  KC_BSPC,  RAISE,   KC_LEFT, KC_DOWN, KC_UP,
+  60:../../keyboards/preonic/keymaps/default/keymap.c **** },
+  61:../../keyboards/preonic/keymaps/default/keymap.c **** 
+  62:../../keyboards/preonic/keymaps/default/keymap.c **** /* Lower
+  63:../../keyboards/preonic/keymaps/default/keymap.c ****  * ,-----------------------------------------------------------------------------------.
+  64:../../keyboards/preonic/keymaps/default/keymap.c ****  * | ESC  |   !  |   @  |   #  |   $  |   %  |   ^  |   &  |   *  |   (  |   )  |  _   |
+  65:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+-------------+------+------+------+------+------|
+  66:../../keyboards/preonic/keymaps/default/keymap.c ****  * | ESC  |   !  |   @  |   #  |   $  |   %  |   ^  |   &  |   *  |   [  |   ]  |  `   |
+  67:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+-------------+------+------+------+------+------|
+  68:../../keyboards/preonic/keymaps/default/keymap.c ****  * | Del  |  F1  |  F2  |  F3  |  F4  |  F5  |  F6  |   _  |   +  |   {  |   }  |  |   |
+  69:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------|------+------+------+------+------+------|
+  70:../../keyboards/preonic/keymaps/default/keymap.c ****  * |      |  F7  |  F8  |  F9  |  F10 |  F11 |  F12 |ISO ~ |ISO | |      |      |  ~   |
+  71:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+  72:../../keyboards/preonic/keymaps/default/keymap.c ****  * |      |      |      |      |      |             |      | home |P_down| p_up | end  |
+  73:../../keyboards/preonic/keymaps/default/keymap.c ****  * `-----------------------------------------------------------------------------------'
+  74:../../keyboards/preonic/keymaps/default/keymap.c ****  */
+  75:../../keyboards/preonic/keymaps/default/keymap.c **** [_LOWER] = {
+  76:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_TILD, KC_EXLM, KC_AT,   KC_HASH, KC_DLR,  KC_PERC, KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, KC_RPR
+  77:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_TILD, KC_EXLM, KC_AT,   KC_HASH, KC_DLR,  KC_PERC, KC_CIRC, KC_AMPR, KC_ASTR, KC_LBRC, KC_RBR
+  78:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_DEL,  KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_UNDS, KC_PLUS, KC_LCBR, KC_RCB
+  79:../../keyboards/preonic/keymaps/default/keymap.c ****   {_______, KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,  KC_F12,S(KC_NUHS),S(KC_NUBS),KC_EQL, _____
+  80:../../keyboards/preonic/keymaps/default/keymap.c ****   {_______, _______, _______, _______, _______, _______, _______, _______, KC_HOME, KC_PGDN, KC_PGU
+  81:../../keyboards/preonic/keymaps/default/keymap.c **** },
+  82:../../keyboards/preonic/keymaps/default/keymap.c **** 
+  83:../../keyboards/preonic/keymaps/default/keymap.c **** /* Raise
+  84:../../keyboards/preonic/keymaps/default/keymap.c ****  * ,-----------------------------------------------------------------------------------.
+  85:../../keyboards/preonic/keymaps/default/keymap.c ****  * |   `  |   1  |   2  |   3  |   4  |   5  |   6  |   7  |   8  |   9  |   0  |PSreen|
+  86:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+  87:../../keyboards/preonic/keymaps/default/keymap.c ****  * |   `  |   1  |   2  |   3  |   4  |   5  |   6  |   7  |M_BTN1| M-U  |M_BTN2|M_ACL0|
+  88:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+-------------+------+------+------+------+------|
+  89:../../keyboards/preonic/keymaps/default/keymap.c ****  * | Del  |  F1  |  F2  |  F3  |  F4  |  F5  |  F6  |   -  | M-L  | M-D  | M-R  |M_ACL1|
+  90:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------|------+------+------+------+------+------|
+  91:../../keyboards/preonic/keymaps/default/keymap.c ****  * |      |  F7  |  F8  |  F9  |  F10 |  F11 |  F12 |ISO # |ISO / |  =   |      |M_ACL2|
+  92:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+  93:../../keyboards/preonic/keymaps/default/keymap.c ****  * |      |      |      |      |      |             |      | Next | Vol- | Vol+ | Play |
+  94:../../keyboards/preonic/keymaps/default/keymap.c ****  * `-----------------------------------------------------------------------------------'
+  95:../../keyboards/preonic/keymaps/default/keymap.c ****  */
+  96:../../keyboards/preonic/keymaps/default/keymap.c **** [_RAISE] = {
+  97:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0, 
+  98:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_MS_BTN1, KC_MS_U, KC_
+  99:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_DEL,  KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_MINS, KC_MS_L, KC_MS_D, KC_MS_
+ 100:../../keyboards/preonic/keymaps/default/keymap.c ****   {_______, KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,  KC_F12,  KC_NUHS, KC_NUBS, KC_EQL,  ______
+ 101:../../keyboards/preonic/keymaps/default/keymap.c ****   {_______, _______, _______, _______, _______, _______, _______, _______, KC_MNXT, KC_VOLD, KC_VOL
+ 102:../../keyboards/preonic/keymaps/default/keymap.c **** },
+ 103:../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 104:../../keyboards/preonic/keymaps/default/keymap.c **** /* Colemak
+ 105:../../keyboards/preonic/keymaps/default/keymap.c ****  * ,-----------------------------------------------------------------------------------.
+ 106:../../keyboards/preonic/keymaps/default/keymap.c ****  * |   `  |   1  |   2  |   3  |   4  |   5  |   6  |   7  |   8  |   9  |   0  | Bksp |
+ 107:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+ 108:../../keyboards/preonic/keymaps/default/keymap.c ****  * | Tab  |   Q  |   W  |   F  |   P  |   G  |   J  |   L  |   U  |   Y  |   ;  | Del  |
+ 109:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+-------------+------+------+------+------+------|
+ 110:../../keyboards/preonic/keymaps/default/keymap.c ****  * | Esc  |   A  |   R  |   S  |   T  |   D  |   H  |   N  |   E  |   I  |   O  |  "   |
+ 111:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------|------+------+------+------+------+------|
+ 112:../../keyboards/preonic/keymaps/default/keymap.c ****  * | Shift|   Z  |   X  |   C  |   V  |   B  |   K  |   M  |   ,  |   .  |   /  |Enter |
+ 113:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+ 114:../../keyboards/preonic/keymaps/default/keymap.c ****  * | Brite| Ctrl | Alt  | GUI  |Lower |    Space    |Raise | Left | Down |  Up  |Right |
+ 115:../../keyboards/preonic/keymaps/default/keymap.c ****  * `-----------------------------------------------------------------------------------'
+ 116:../../keyboards/preonic/keymaps/default/keymap.c ****  */
+ 117:../../keyboards/preonic/keymaps/default/keymap.c **** [_COLEMAK] = {
+ 118:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0, 
+ 119:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_TAB,  KC_Q,    KC_W,    KC_F,    KC_P,    KC_G,    KC_J,    KC_L,    KC_U,    KC_Y,    KC_SCL
+ 120:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_ESC,  KC_A,    KC_R,    KC_S,    KC_T,    KC_D,    KC_H,    KC_N,    KC_E,    KC_I,    KC_O, 
+ 121:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_K,    KC_M,    KC_COMM, KC_DOT,  KC_SLS
+ 122:../../keyboards/preonic/keymaps/default/keymap.c ****   {BACKLIT, KC_LCTL, KC_LALT, KC_LGUI, LOWER,   KC_SPC,  KC_SPC,  RAISE,   KC_LEFT, KC_DOWN, KC_UP,
+ 123:../../keyboards/preonic/keymaps/default/keymap.c **** },
+ 124:../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 125:../../keyboards/preonic/keymaps/default/keymap.c **** /* Dvorak
+ 126:../../keyboards/preonic/keymaps/default/keymap.c ****  * ,-----------------------------------------------------------------------------------.
+ 127:../../keyboards/preonic/keymaps/default/keymap.c ****  * |   `  |   1  |   2  |   3  |   4  |   5  |   6  |   7  |   8  |   9  |   0  | Bksp |
+ 128:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+ 129:../../keyboards/preonic/keymaps/default/keymap.c ****  * | Tab  |   "  |   ,  |   .  |   P  |   Y  |   F  |   G  |   C  |   R  |   L  | Del  |
+ 130:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+-------------+------+------+------+------+------|
+ 131:../../keyboards/preonic/keymaps/default/keymap.c ****  * | Esc  |   A  |   O  |   E  |   U  |   I  |   D  |   H  |   T  |   N  |   S  |  /   |
+ 132:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------|------+------+------+------+------+------|
+ 133:../../keyboards/preonic/keymaps/default/keymap.c ****  * | Shift|   ;  |   Q  |   J  |   K  |   X  |   B  |   M  |   W  |   V  |   Z  |Enter |
+ 134:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+ 135:../../keyboards/preonic/keymaps/default/keymap.c ****  * | Brite| Ctrl | Alt  | GUI  |Lower |    Space    |Raise | Left | Down |  Up  |Right |
+ 136:../../keyboards/preonic/keymaps/default/keymap.c ****  * `-----------------------------------------------------------------------------------'
+ 137:../../keyboards/preonic/keymaps/default/keymap.c ****  */
+ 138:../../keyboards/preonic/keymaps/default/keymap.c **** [_DVORAK] = {
+ 139:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0, 
+ 140:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_TAB,  KC_QUOT, KC_COMM, KC_DOT,  KC_P,    KC_Y,    KC_F,    KC_G,    KC_C,    KC_R,    KC_L, 
+ 141:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_ESC,  KC_A,    KC_O,    KC_E,    KC_U,    KC_I,    KC_D,    KC_H,    KC_T,    KC_N,    KC_S, 
+ 142:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_LSFT, KC_SCLN, KC_Q,    KC_J,    KC_K,    KC_X,    KC_B,    KC_M,    KC_W,    KC_V,    KC_Z, 
+ 143:../../keyboards/preonic/keymaps/default/keymap.c ****   {BACKLIT, KC_LCTL, KC_LALT, KC_LGUI, LOWER,   KC_SPC,  KC_SPC,  RAISE,   KC_LEFT, KC_DOWN, KC_UP,
+ 144:../../keyboards/preonic/keymaps/default/keymap.c **** },
+ 145:../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 146:../../keyboards/preonic/keymaps/default/keymap.c **** /* Adjust (Lower + Raise)
+ 147:../../keyboards/preonic/keymaps/default/keymap.c ****  * ,-----------------------------------------------------------------------------------.
+ 148:../../keyboards/preonic/keymaps/default/keymap.c ****  * |  F1  |  F2  |  F3  |  F4  |  F5  |  F6  |  F7  |  F8  |  F9  |  F10 |  F11 |  F12 |
+ 149:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+ 150:../../keyboards/preonic/keymaps/default/keymap.c ****  * |      | Reset|      |      |      |      |      |      |      |      |      |  Del |
+ 151:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+-------------+------+------+------+------+------|
+ 152:../../keyboards/preonic/keymaps/default/keymap.c ****  * |      |      |      |Aud on|AudOff|AGnorm|AGswap|Qwerty|Colemk|Dvorak|      |      |
+ 153:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------|------+------+------+------+------+------|
+ 154:../../keyboards/preonic/keymaps/default/keymap.c ****  * |      |Voice-|Voice+|Mus on|MusOff|MidiOn|MidOff|      |      |      |      |      |
+ 155:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+ 156:../../keyboards/preonic/keymaps/default/keymap.c ****  * |      |      |      |      |      |             |      |      |      |      |      |
+ 157:../../keyboards/preonic/keymaps/default/keymap.c ****  * `-----------------------------------------------------------------------------------'
+ 158:../../keyboards/preonic/keymaps/default/keymap.c ****  */
+ 159:../../keyboards/preonic/keymaps/default/keymap.c **** [_ADJUST] = {
+ 160:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11
+ 161:../../keyboards/preonic/keymaps/default/keymap.c ****   {_______, RESET,   MI_ON, MI_OFF, _______, _______, _______, _______, _______, _______, _______, 
+ 162:../../keyboards/preonic/keymaps/default/keymap.c ****   {_______, _______, _______, AU_ON,   AU_OFF,  AG_NORM, AG_SWAP, QWERTY,  COLEMAK, DVORAK,  ______
+ 163:../../keyboards/preonic/keymaps/default/keymap.c ****   {_______, MUV_DE,  MUV_IN,  MU_ON,   MU_OFF,  MI_ON,   MI_OFF,  _______, _______, _______, ______
+ 164:../../keyboards/preonic/keymaps/default/keymap.c ****   {_______, _______, _______, _______, _______, _______, _______, _______, _______, _______, ______
+ 165:../../keyboards/preonic/keymaps/default/keymap.c **** }
+ 166:../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 167:../../keyboards/preonic/keymaps/default/keymap.c **** /* Qwerty: replaced with HHKB as default
+ 168:../../keyboards/preonic/keymaps/default/keymap.c ****  * ,-----------------------------------------------------------------------------------.
+ 169:../../keyboards/preonic/keymaps/default/keymap.c ****  * |   `  |   1  |   2  |   3  |   4  |   5  |   6  |   7  |   8  |   9  |   0  | Bksp |
+ 170:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+ 171:../../keyboards/preonic/keymaps/default/keymap.c ****  * | Tab  |   Q  |   W  |   E  |   R  |   T  |   Y  |   U  |   I  |   O  |   P  | Del  |
+ 172:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+-------------+------+------+------+------+------|
+ 173:../../keyboards/preonic/keymaps/default/keymap.c ****  * | Esc  |   A  |   S  |   D  |   F  |   G  |   H  |   J  |   K  |   L  |   ;  |  "   |
+ 174:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------|------+------+------+------+------+------|
+ 175:../../keyboards/preonic/keymaps/default/keymap.c ****  * | Shift|   Z  |   X  |   C  |   V  |   B  |   N  |   M  |   ,  |   .  |   /  |Enter |
+ 176:../../keyboards/preonic/keymaps/default/keymap.c ****  * |------+------+------+------+------+------+------+------+------+------+------+------|
+ 177:../../keyboards/preonic/keymaps/default/keymap.c ****  * | Brite| Ctrl | Alt  | GUI  |Lower |    Space    |Raise | Left | Down |  Up  |Right |
+ 178:../../keyboards/preonic/keymaps/default/keymap.c ****  * `-----------------------------------------------------------------------------------'
+ 179:../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 180:../../keyboards/preonic/keymaps/default/keymap.c **** [_QWERTY] = {
+ 181:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0, 
+ 182:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P, 
+ 183:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_ESC,  KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCL
+ 184:../../keyboards/preonic/keymaps/default/keymap.c ****   {KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLS
+ 185:../../keyboards/preonic/keymaps/default/keymap.c ****   {BACKLIT, KC_LCTL, KC_LALT, KC_LGUI, LOWER,   KC_SPC,  KC_SPC,  RAISE,   KC_LEFT, KC_DOWN, KC_UP,
+ 186:../../keyboards/preonic/keymaps/default/keymap.c **** },
+ 187:../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 188:../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 189:../../keyboards/preonic/keymaps/default/keymap.c ****  */
+ 190:../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 191:../../keyboards/preonic/keymaps/default/keymap.c **** };
+ 192:../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 193:../../keyboards/preonic/keymaps/default/keymap.c **** #ifdef AUDIO_ENABLE
+ 194:../../keyboards/preonic/keymaps/default/keymap.c **** float tone_startup[][2] = {
+ 195:../../keyboards/preonic/keymaps/default/keymap.c ****   {NOTE_B5, 20},
+ 196:../../keyboards/preonic/keymaps/default/keymap.c ****   {NOTE_B6, 8},
+ 197:../../keyboards/preonic/keymaps/default/keymap.c ****   {NOTE_DS6, 20},
+ 198:../../keyboards/preonic/keymaps/default/keymap.c ****   {NOTE_B6, 8}
+ 199:../../keyboards/preonic/keymaps/default/keymap.c **** };
+ 200:../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 201:../../keyboards/preonic/keymaps/default/keymap.c **** float tone_qwerty[][2]     = SONG(QWERTY_SOUND);
+ 202:../../keyboards/preonic/keymaps/default/keymap.c **** float tone_dvorak[][2]     = SONG(DVORAK_SOUND);
+ 203:../../keyboards/preonic/keymaps/default/keymap.c **** float tone_colemak[][2]    = SONG(COLEMAK_SOUND);
+ 204:../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 205:../../keyboards/preonic/keymaps/default/keymap.c **** float tone_goodbye[][2] = SONG(GOODBYE_SOUND);
+ 206:../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 207:../../keyboards/preonic/keymaps/default/keymap.c **** float music_scale[][2]     = SONG(MUSIC_SCALE_SOUND);
+ 208:../../keyboards/preonic/keymaps/default/keymap.c **** #endif
+ 209:../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 210:../../keyboards/preonic/keymaps/default/keymap.c **** void persistant_default_layer_set(uint16_t default_layer) {
+  16               		.loc 1 210 0
+  17               		.cfi_startproc
+  18               	.LVL0:
+  19 0000 CF93      		push r28
+  20               	.LCFI0:
+  21               		.cfi_def_cfa_offset 3
+  22               		.cfi_offset 28, -2
+  23 0002 DF93      		push r29
+  24               	.LCFI1:
+  25               		.cfi_def_cfa_offset 4
+  26               		.cfi_offset 29, -3
+  27               	/* prologue: function */
+  28               	/* frame size = 0 */
+  29               	/* stack size = 2 */
+  30               	.L__stack_usage = 2
+  31 0004 EC01      		movw r28,r24
+ 211:../../keyboards/preonic/keymaps/default/keymap.c ****   eeconfig_update_default_layer(default_layer);
+  32               		.loc 1 211 0
+  33 0006 0E94 0000 		call eeconfig_update_default_layer
+  34               	.LVL1:
+ 212:../../keyboards/preonic/keymaps/default/keymap.c ****   default_layer_set(default_layer);
+  35               		.loc 1 212 0
+  36 000a BE01      		movw r22,r28
+  37 000c 80E0      		ldi r24,0
+  38 000e 90E0      		ldi r25,0
+  39               	/* epilogue start */
+ 213:../../keyboards/preonic/keymaps/default/keymap.c **** }
+  40               		.loc 1 213 0
+  41 0010 DF91      		pop r29
+  42 0012 CF91      		pop r28
+  43               	.LVL2:
+ 212:../../keyboards/preonic/keymaps/default/keymap.c ****   default_layer_set(default_layer);
+  44               		.loc 1 212 0
+  45 0014 0C94 0000 		jmp default_layer_set
+  46               	.LVL3:
+  47               		.cfi_endproc
+  48               	.LFE107:
+  50               		.section	.text.process_record_user,"ax",@progbits
+  51               	.global	process_record_user
+  53               	process_record_user:
+  54               	.LFB108:
+ 214:../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 215:../../keyboards/preonic/keymaps/default/keymap.c **** bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+  55               		.loc 1 215 0
+  56               		.cfi_startproc
+  57               	.LVL4:
+  58 0000 CF93      		push r28
+  59               	.LCFI2:
+  60               		.cfi_def_cfa_offset 3
+  61               		.cfi_offset 28, -2
+  62               	/* prologue: function */
+  63               	/* frame size = 0 */
+  64               	/* stack size = 1 */
+  65               	.L__stack_usage = 1
+  66 0002 FB01      		movw r30,r22
+ 216:../../keyboards/preonic/keymaps/default/keymap.c ****   switch (keycode) {
+  67               		.loc 1 216 0
+  68 0004 8F33      		cpi r24,63
+  69 0006 20E7      		ldi r18,112
+  70 0008 9207      		cpc r25,r18
+  71 000a 01F0      		breq .L4
+  72 000c 00F4      		brsh .L5
+  73 000e 8D33      		cpi r24,61
+  74 0010 20E7      		ldi r18,112
+  75 0012 9207      		cpc r25,r18
+  76 0014 01F0      		breq .L6
+  77 0016 8E33      		cpi r24,62
+  78 0018 9047      		sbci r25,112
+  79 001a 01F0      		breq .L7
+  80 001c 00C0      		rjmp .L14
+  81               	.L5:
+  82 001e 8134      		cpi r24,65
+  83 0020 20E7      		ldi r18,112
+  84 0022 9207      		cpc r25,r18
+  85 0024 01F0      		breq .L8
+  86 0026 00F0      		brlo .L9
+  87 0028 8234      		cpi r24,66
+  88 002a 9047      		sbci r25,112
+  89 002c 01F0      		breq .L10
+  90 002e 00C0      		rjmp .L14
+  91               	.L6:
+ 217:../../keyboards/preonic/keymaps/default/keymap.c ****         case QWERTY:
+ 218:../../keyboards/preonic/keymaps/default/keymap.c ****           if (record->event.pressed) {
+  92               		.loc 1 218 0
+  93 0030 C281      		ldd r28,Z+2
+  94 0032 CC23      		tst r28
+  95 0034 01F0      		breq .L3
+ 219:../../keyboards/preonic/keymaps/default/keymap.c ****             #ifdef AUDIO_ENABLE
+ 220:../../keyboards/preonic/keymaps/default/keymap.c ****               PLAY_NOTE_ARRAY(tone_qwerty, false, 0);
+ 221:../../keyboards/preonic/keymaps/default/keymap.c ****             #endif
+ 222:../../keyboards/preonic/keymaps/default/keymap.c ****             persistant_default_layer_set(1UL<<_QWERTY);
+  96               		.loc 1 222 0
+  97 0036 81E0      		ldi r24,lo8(1)
+  98 0038 90E0      		ldi r25,0
+  99               	.LVL5:
+ 100 003a 00C0      		rjmp .L25
+ 101               	.LVL6:
+ 102               	.L7:
+ 223:../../keyboards/preonic/keymaps/default/keymap.c ****           }
+ 224:../../keyboards/preonic/keymaps/default/keymap.c ****           return false;
+ 225:../../keyboards/preonic/keymaps/default/keymap.c ****           break;
+ 226:../../keyboards/preonic/keymaps/default/keymap.c ****         case COLEMAK:
+ 227:../../keyboards/preonic/keymaps/default/keymap.c ****           if (record->event.pressed) {
+ 103               		.loc 1 227 0
+ 104 003c C281      		ldd r28,Z+2
+ 105 003e CC23      		tst r28
+ 106 0040 01F0      		breq .L3
+ 228:../../keyboards/preonic/keymaps/default/keymap.c ****             #ifdef AUDIO_ENABLE
+ 229:../../keyboards/preonic/keymaps/default/keymap.c ****               PLAY_NOTE_ARRAY(tone_colemak, false, 0);
+ 230:../../keyboards/preonic/keymaps/default/keymap.c ****             #endif
+ 231:../../keyboards/preonic/keymaps/default/keymap.c ****             persistant_default_layer_set(1UL<<_COLEMAK);
+ 107               		.loc 1 231 0
+ 108 0042 82E0      		ldi r24,lo8(2)
+ 109 0044 90E0      		ldi r25,0
+ 110               	.LVL7:
+ 111               	.L25:
+ 112 0046 0E94 0000 		call persistant_default_layer_set
+ 113               	.LVL8:
+ 114 004a 00C0      		rjmp .L24
+ 115               	.LVL9:
+ 116               	.L4:
+ 232:../../keyboards/preonic/keymaps/default/keymap.c ****           }
+ 233:../../keyboards/preonic/keymaps/default/keymap.c ****           return false;
+ 234:../../keyboards/preonic/keymaps/default/keymap.c ****           break;
+ 235:../../keyboards/preonic/keymaps/default/keymap.c ****         case DVORAK:
+ 236:../../keyboards/preonic/keymaps/default/keymap.c ****           if (record->event.pressed) {
+ 117               		.loc 1 236 0
+ 118 004c C281      		ldd r28,Z+2
+ 119 004e CC23      		tst r28
+ 120 0050 01F0      		breq .L3
+ 237:../../keyboards/preonic/keymaps/default/keymap.c ****             #ifdef AUDIO_ENABLE
+ 238:../../keyboards/preonic/keymaps/default/keymap.c ****               PLAY_NOTE_ARRAY(tone_dvorak, false, 0);
+ 239:../../keyboards/preonic/keymaps/default/keymap.c ****             #endif
+ 240:../../keyboards/preonic/keymaps/default/keymap.c ****             persistant_default_layer_set(1UL<<_DVORAK);
+ 121               		.loc 1 240 0
+ 122 0052 84E0      		ldi r24,lo8(4)
+ 123 0054 90E0      		ldi r25,0
+ 124               	.LVL10:
+ 125 0056 00C0      		rjmp .L25
+ 126               	.LVL11:
+ 127               	.L9:
+ 241:../../keyboards/preonic/keymaps/default/keymap.c ****           }
+ 242:../../keyboards/preonic/keymaps/default/keymap.c ****           return false;
+ 243:../../keyboards/preonic/keymaps/default/keymap.c ****           break;
+ 244:../../keyboards/preonic/keymaps/default/keymap.c ****         case LOWER:
+ 245:../../keyboards/preonic/keymaps/default/keymap.c ****           if (record->event.pressed) {
+ 128               		.loc 1 245 0
+ 129 0058 C281      		ldd r28,Z+2
+ 246:../../keyboards/preonic/keymaps/default/keymap.c ****             layer_on(_LOWER);
+ 130               		.loc 1 246 0
+ 131 005a 83E0      		ldi r24,lo8(3)
+ 132               	.LVL12:
+ 133 005c 00C0      		rjmp .L28
+ 134               	.LVL13:
+ 135               	.L8:
+ 247:../../keyboards/preonic/keymaps/default/keymap.c ****             update_tri_layer(_LOWER, _RAISE, _ADJUST);
+ 248:../../keyboards/preonic/keymaps/default/keymap.c ****           } else {
+ 249:../../keyboards/preonic/keymaps/default/keymap.c ****             layer_off(_LOWER);
+ 250:../../keyboards/preonic/keymaps/default/keymap.c ****             update_tri_layer(_LOWER, _RAISE, _ADJUST);
+ 251:../../keyboards/preonic/keymaps/default/keymap.c ****           }
+ 252:../../keyboards/preonic/keymaps/default/keymap.c ****           return false;
+ 253:../../keyboards/preonic/keymaps/default/keymap.c ****           break;
+ 254:../../keyboards/preonic/keymaps/default/keymap.c ****         case RAISE:
+ 255:../../keyboards/preonic/keymaps/default/keymap.c ****           if (record->event.pressed) {
+ 136               		.loc 1 255 0
+ 137 005e C281      		ldd r28,Z+2
+ 256:../../keyboards/preonic/keymaps/default/keymap.c ****             layer_on(_RAISE);
+ 138               		.loc 1 256 0
+ 139 0060 84E0      		ldi r24,lo8(4)
+ 140               	.LVL14:
+ 141               	.L28:
+ 255:../../keyboards/preonic/keymaps/default/keymap.c ****             layer_on(_RAISE);
+ 142               		.loc 1 255 0
+ 143 0062 CC23      		tst r28
+ 144 0064 01F0      		breq .L12
+ 145               		.loc 1 256 0
+ 146 0066 0E94 0000 		call layer_on
+ 147               	.LVL15:
+ 257:../../keyboards/preonic/keymaps/default/keymap.c ****             update_tri_layer(_LOWER, _RAISE, _ADJUST);
+ 148               		.loc 1 257 0
+ 149 006a 40E1      		ldi r20,lo8(16)
+ 150 006c 64E0      		ldi r22,lo8(4)
+ 151 006e 83E0      		ldi r24,lo8(3)
+ 152 0070 0E94 0000 		call update_tri_layer
+ 153               	.LVL16:
+ 154 0074 00C0      		rjmp .L24
+ 155               	.LVL17:
+ 156               	.L12:
+ 258:../../keyboards/preonic/keymaps/default/keymap.c ****           } else {
+ 259:../../keyboards/preonic/keymaps/default/keymap.c ****             layer_off(_RAISE);
+ 157               		.loc 1 259 0
+ 158 0076 0E94 0000 		call layer_off
+ 159               	.LVL18:
+ 260:../../keyboards/preonic/keymaps/default/keymap.c ****             update_tri_layer(_LOWER, _RAISE, _ADJUST);
+ 160               		.loc 1 260 0
+ 161 007a 40E1      		ldi r20,lo8(16)
+ 162 007c 64E0      		ldi r22,lo8(4)
+ 163 007e 83E0      		ldi r24,lo8(3)
+ 164 0080 0E94 0000 		call update_tri_layer
+ 165               	.LVL19:
+ 166 0084 00C0      		rjmp .L3
+ 167               	.LVL20:
+ 168               	.L10:
+ 261:../../keyboards/preonic/keymaps/default/keymap.c ****           }
+ 262:../../keyboards/preonic/keymaps/default/keymap.c ****           return false;
+ 263:../../keyboards/preonic/keymaps/default/keymap.c ****           break;
+ 264:../../keyboards/preonic/keymaps/default/keymap.c ****         case BACKLIT:
+ 265:../../keyboards/preonic/keymaps/default/keymap.c ****           if (record->event.pressed) {
+ 169               		.loc 1 265 0
+ 170 0086 C281      		ldd r28,Z+2
+ 266:../../keyboards/preonic/keymaps/default/keymap.c ****             register_code(KC_RSFT);
+ 171               		.loc 1 266 0
+ 172 0088 85EE      		ldi r24,lo8(-27)
+ 173               	.LVL21:
+ 265:../../keyboards/preonic/keymaps/default/keymap.c ****             register_code(KC_RSFT);
+ 174               		.loc 1 265 0
+ 175 008a CC23      		tst r28
+ 176 008c 01F0      		breq .L13
+ 177               		.loc 1 266 0
+ 178 008e 0E94 0000 		call register_code
+ 179               	.LVL22:
+ 267:../../keyboards/preonic/keymaps/default/keymap.c ****             #ifdef BACKLIGHT_ENABLE
+ 268:../../keyboards/preonic/keymaps/default/keymap.c ****               backlight_step();
+ 180               		.loc 1 268 0
+ 181 0092 0E94 0000 		call backlight_step
+ 182               	.LVL23:
+ 183               	.L24:
+ 269:../../keyboards/preonic/keymaps/default/keymap.c ****             #endif
+ 270:../../keyboards/preonic/keymaps/default/keymap.c ****           } else {
+ 271:../../keyboards/preonic/keymaps/default/keymap.c ****             unregister_code(KC_RSFT);
+ 272:../../keyboards/preonic/keymaps/default/keymap.c ****           }
+ 273:../../keyboards/preonic/keymaps/default/keymap.c ****           return false;
+ 184               		.loc 1 273 0
+ 185 0096 C0E0      		ldi r28,0
+ 186 0098 00C0      		rjmp .L3
+ 187               	.LVL24:
+ 188               	.L13:
+ 271:../../keyboards/preonic/keymaps/default/keymap.c ****           }
+ 189               		.loc 1 271 0
+ 190 009a 0E94 0000 		call unregister_code
+ 191               	.LVL25:
+ 192 009e 00C0      		rjmp .L3
+ 193               	.LVL26:
+ 194               	.L14:
+ 274:../../keyboards/preonic/keymaps/default/keymap.c ****           break;
+ 275:../../keyboards/preonic/keymaps/default/keymap.c ****       }
+ 276:../../keyboards/preonic/keymaps/default/keymap.c ****     return true;
+ 195               		.loc 1 276 0
+ 196 00a0 C1E0      		ldi r28,lo8(1)
+ 197               	.LVL27:
+ 198               	.L3:
+ 277:../../keyboards/preonic/keymaps/default/keymap.c **** };
+ 199               		.loc 1 277 0
+ 200 00a2 8C2F      		mov r24,r28
+ 201               	/* epilogue start */
+ 202 00a4 CF91      		pop r28
+ 203 00a6 0895      		ret
+ 204               		.cfi_endproc
+ 205               	.LFE108:
+ 207               		.section	.text.matrix_init_user,"ax",@progbits
+ 208               	.global	matrix_init_user
+ 210               	matrix_init_user:
+ 211               	.LFB109:
+ 278:../../keyboards/preonic/keymaps/default/keymap.c **** 
+ 279:../../keyboards/preonic/keymaps/default/keymap.c **** void matrix_init_user(void) {
+ 212               		.loc 1 279 0
+ 213               		.cfi_startproc
+ 214               	/* prologue: function */
+ 215               	/* frame size = 0 */
+ 216               	/* stack size = 0 */
+ 217               	.L__stack_usage = 0
+ 218 0000 0895      		ret
+ 219               		.cfi_endproc
+ 220               	.LFE109:
+ 222               	.global	keymaps
+ 223               		.section	.progmem.data.keymaps,"a",@progbits
+ 226               	keymaps:
+ 227 0000 2900      		.word	41
+ 228 0002 1E00      		.word	30
+ 229 0004 1F00      		.word	31
+ 230 0006 2000      		.word	32
+ 231 0008 2100      		.word	33
+ 232 000a 2200      		.word	34
+ 233 000c 2300      		.word	35
+ 234 000e 2400      		.word	36
+ 235 0010 2500      		.word	37
+ 236 0012 2600      		.word	38
+ 237 0014 2700      		.word	39
+ 238 0016 2D00      		.word	45
+ 239 0018 2B00      		.word	43
+ 240 001a 1400      		.word	20
+ 241 001c 1A00      		.word	26
+ 242 001e 0800      		.word	8
+ 243 0020 1500      		.word	21
+ 244 0022 1700      		.word	23
+ 245 0024 1C00      		.word	28
+ 246 0026 1800      		.word	24
+ 247 0028 0C00      		.word	12
+ 248 002a 1200      		.word	18
+ 249 002c 1300      		.word	19
+ 250 002e 2E00      		.word	46
+ 251 0030 E000      		.word	224
+ 252 0032 0400      		.word	4
+ 253 0034 1600      		.word	22
+ 254 0036 0700      		.word	7
+ 255 0038 0900      		.word	9
+ 256 003a 0A00      		.word	10
+ 257 003c 0B00      		.word	11
+ 258 003e 0D00      		.word	13
+ 259 0040 0E00      		.word	14
+ 260 0042 0F00      		.word	15
+ 261 0044 3300      		.word	51
+ 262 0046 2800      		.word	40
+ 263 0048 E100      		.word	225
+ 264 004a 1D00      		.word	29
+ 265 004c 1B00      		.word	27
+ 266 004e 0600      		.word	6
+ 267 0050 1900      		.word	25
+ 268 0052 0500      		.word	5
+ 269 0054 1100      		.word	17
+ 270 0056 1000      		.word	16
+ 271 0058 3600      		.word	54
+ 272 005a 3700      		.word	55
+ 273 005c 3800      		.word	56
+ 274 005e 3400      		.word	52
+ 275 0060 4270      		.word	28738
+ 276 0062 2900      		.word	41
+ 277 0064 E200      		.word	226
+ 278 0066 E300      		.word	227
+ 279 0068 4070      		.word	28736
+ 280 006a 2C00      		.word	44
+ 281 006c 2A00      		.word	42
+ 282 006e 4170      		.word	28737
+ 283 0070 5000      		.word	80
+ 284 0072 5100      		.word	81
+ 285 0074 5200      		.word	82
+ 286 0076 4F00      		.word	79
+ 287 0078 3500      		.word	53
+ 288 007a 1E00      		.word	30
+ 289 007c 1F00      		.word	31
+ 290 007e 2000      		.word	32
+ 291 0080 2100      		.word	33
+ 292 0082 2200      		.word	34
+ 293 0084 2300      		.word	35
+ 294 0086 2400      		.word	36
+ 295 0088 2500      		.word	37
+ 296 008a 2600      		.word	38
+ 297 008c 2700      		.word	39
+ 298 008e 2A00      		.word	42
+ 299 0090 2B00      		.word	43
+ 300 0092 1400      		.word	20
+ 301 0094 1A00      		.word	26
+ 302 0096 0900      		.word	9
+ 303 0098 1300      		.word	19
+ 304 009a 0A00      		.word	10
+ 305 009c 0D00      		.word	13
+ 306 009e 0F00      		.word	15
+ 307 00a0 1800      		.word	24
+ 308 00a2 1C00      		.word	28
+ 309 00a4 3300      		.word	51
+ 310 00a6 4C00      		.word	76
+ 311 00a8 2900      		.word	41
+ 312 00aa 0400      		.word	4
+ 313 00ac 1500      		.word	21
+ 314 00ae 1600      		.word	22
+ 315 00b0 1700      		.word	23
+ 316 00b2 0700      		.word	7
+ 317 00b4 0B00      		.word	11
+ 318 00b6 1100      		.word	17
+ 319 00b8 0800      		.word	8
+ 320 00ba 0C00      		.word	12
+ 321 00bc 1200      		.word	18
+ 322 00be 3400      		.word	52
+ 323 00c0 E100      		.word	225
+ 324 00c2 1D00      		.word	29
+ 325 00c4 1B00      		.word	27
+ 326 00c6 0600      		.word	6
+ 327 00c8 1900      		.word	25
+ 328 00ca 0500      		.word	5
+ 329 00cc 0E00      		.word	14
+ 330 00ce 1000      		.word	16
+ 331 00d0 3600      		.word	54
+ 332 00d2 3700      		.word	55
+ 333 00d4 3800      		.word	56
+ 334 00d6 2800      		.word	40
+ 335 00d8 4270      		.word	28738
+ 336 00da E000      		.word	224
+ 337 00dc E200      		.word	226
+ 338 00de E300      		.word	227
+ 339 00e0 4070      		.word	28736
+ 340 00e2 2C00      		.word	44
+ 341 00e4 2C00      		.word	44
+ 342 00e6 4170      		.word	28737
+ 343 00e8 5000      		.word	80
+ 344 00ea 5100      		.word	81
+ 345 00ec 5200      		.word	82
+ 346 00ee 4F00      		.word	79
+ 347 00f0 3500      		.word	53
+ 348 00f2 1E00      		.word	30
+ 349 00f4 1F00      		.word	31
+ 350 00f6 2000      		.word	32
+ 351 00f8 2100      		.word	33
+ 352 00fa 2200      		.word	34
+ 353 00fc 2300      		.word	35
+ 354 00fe 2400      		.word	36
+ 355 0100 2500      		.word	37
+ 356 0102 2600      		.word	38
+ 357 0104 2700      		.word	39
+ 358 0106 2A00      		.word	42
+ 359 0108 2B00      		.word	43
+ 360 010a 3400      		.word	52
+ 361 010c 3600      		.word	54
+ 362 010e 3700      		.word	55
+ 363 0110 1300      		.word	19
+ 364 0112 1C00      		.word	28
+ 365 0114 0900      		.word	9
+ 366 0116 0A00      		.word	10
+ 367 0118 0600      		.word	6
+ 368 011a 1500      		.word	21
+ 369 011c 0F00      		.word	15
+ 370 011e 4C00      		.word	76
+ 371 0120 2900      		.word	41
+ 372 0122 0400      		.word	4
+ 373 0124 1200      		.word	18
+ 374 0126 0800      		.word	8
+ 375 0128 1800      		.word	24
+ 376 012a 0C00      		.word	12
+ 377 012c 0700      		.word	7
+ 378 012e 0B00      		.word	11
+ 379 0130 1700      		.word	23
+ 380 0132 1100      		.word	17
+ 381 0134 1600      		.word	22
+ 382 0136 3800      		.word	56
+ 383 0138 E100      		.word	225
+ 384 013a 3300      		.word	51
+ 385 013c 1400      		.word	20
+ 386 013e 0D00      		.word	13
+ 387 0140 0E00      		.word	14
+ 388 0142 1B00      		.word	27
+ 389 0144 0500      		.word	5
+ 390 0146 1000      		.word	16
+ 391 0148 1A00      		.word	26
+ 392 014a 1900      		.word	25
+ 393 014c 1D00      		.word	29
+ 394 014e 2800      		.word	40
+ 395 0150 4270      		.word	28738
+ 396 0152 E000      		.word	224
+ 397 0154 E200      		.word	226
+ 398 0156 E300      		.word	227
+ 399 0158 4070      		.word	28736
+ 400 015a 2C00      		.word	44
+ 401 015c 2C00      		.word	44
+ 402 015e 4170      		.word	28737
+ 403 0160 5000      		.word	80
+ 404 0162 5100      		.word	81
+ 405 0164 5200      		.word	82
+ 406 0166 4F00      		.word	79
+ 407 0168 3502      		.word	565
+ 408 016a 1E02      		.word	542
+ 409 016c 1F02      		.word	543
+ 410 016e 2002      		.word	544
+ 411 0170 2102      		.word	545
+ 412 0172 2202      		.word	546
+ 413 0174 2302      		.word	547
+ 414 0176 2402      		.word	548
+ 415 0178 2502      		.word	549
+ 416 017a 2602      		.word	550
+ 417 017c 2702      		.word	551
+ 418 017e 2D02      		.word	557
+ 419 0180 3502      		.word	565
+ 420 0182 1E02      		.word	542
+ 421 0184 1F02      		.word	543
+ 422 0186 2002      		.word	544
+ 423 0188 2102      		.word	545
+ 424 018a 2202      		.word	546
+ 425 018c 2302      		.word	547
+ 426 018e 2402      		.word	548
+ 427 0190 2502      		.word	549
+ 428 0192 2F00      		.word	47
+ 429 0194 3000      		.word	48
+ 430 0196 3500      		.word	53
+ 431 0198 4C00      		.word	76
+ 432 019a 3A00      		.word	58
+ 433 019c 3B00      		.word	59
+ 434 019e 3C00      		.word	60
+ 435 01a0 3D00      		.word	61
+ 436 01a2 3E00      		.word	62
+ 437 01a4 3F00      		.word	63
+ 438 01a6 2D02      		.word	557
+ 439 01a8 2E02      		.word	558
+ 440 01aa 2F02      		.word	559
+ 441 01ac 3002      		.word	560
+ 442 01ae 3102      		.word	561
+ 443 01b0 0100      		.word	1
+ 444 01b2 4000      		.word	64
+ 445 01b4 4100      		.word	65
+ 446 01b6 4200      		.word	66
+ 447 01b8 4300      		.word	67
+ 448 01ba 4400      		.word	68
+ 449 01bc 4500      		.word	69
+ 450 01be 3202      		.word	562
+ 451 01c0 6402      		.word	612
+ 452 01c2 2E00      		.word	46
+ 453 01c4 0100      		.word	1
+ 454 01c6 3502      		.word	565
+ 455 01c8 0100      		.word	1
+ 456 01ca 0100      		.word	1
+ 457 01cc 0100      		.word	1
+ 458 01ce 0100      		.word	1
+ 459 01d0 0100      		.word	1
+ 460 01d2 0100      		.word	1
+ 461 01d4 0100      		.word	1
+ 462 01d6 0100      		.word	1
+ 463 01d8 4A00      		.word	74
+ 464 01da 4E00      		.word	78
+ 465 01dc 4B00      		.word	75
+ 466 01de 4D00      		.word	77
+ 467 01e0 3500      		.word	53
+ 468 01e2 1E00      		.word	30
+ 469 01e4 1F00      		.word	31
+ 470 01e6 2000      		.word	32
+ 471 01e8 2100      		.word	33
+ 472 01ea 2200      		.word	34
+ 473 01ec 2300      		.word	35
+ 474 01ee 2400      		.word	36
+ 475 01f0 2500      		.word	37
+ 476 01f2 2600      		.word	38
+ 477 01f4 2700      		.word	39
+ 478 01f6 4600      		.word	70
+ 479 01f8 3500      		.word	53
+ 480 01fa 1E00      		.word	30
+ 481 01fc 1F00      		.word	31
+ 482 01fe 2000      		.word	32
+ 483 0200 2100      		.word	33
+ 484 0202 2200      		.word	34
+ 485 0204 2300      		.word	35
+ 486 0206 2400      		.word	36
+ 487 0208 F400      		.word	244
+ 488 020a F000      		.word	240
+ 489 020c F500      		.word	245
+ 490 020e FD00      		.word	253
+ 491 0210 4C00      		.word	76
+ 492 0212 3A00      		.word	58
+ 493 0214 3B00      		.word	59
+ 494 0216 3C00      		.word	60
+ 495 0218 3D00      		.word	61
+ 496 021a 3E00      		.word	62
+ 497 021c 3F00      		.word	63
+ 498 021e 2D00      		.word	45
+ 499 0220 F200      		.word	242
+ 500 0222 F100      		.word	241
+ 501 0224 F300      		.word	243
+ 502 0226 FE00      		.word	254
+ 503 0228 0100      		.word	1
+ 504 022a 4000      		.word	64
+ 505 022c 4100      		.word	65
+ 506 022e 4200      		.word	66
+ 507 0230 4300      		.word	67
+ 508 0232 4400      		.word	68
+ 509 0234 4500      		.word	69
+ 510 0236 3200      		.word	50
+ 511 0238 6400      		.word	100
+ 512 023a 2E00      		.word	46
+ 513 023c 0100      		.word	1
+ 514 023e FF00      		.word	255
+ 515 0240 0100      		.word	1
+ 516 0242 0100      		.word	1
+ 517 0244 0100      		.word	1
+ 518 0246 0100      		.word	1
+ 519 0248 0100      		.word	1
+ 520 024a 0100      		.word	1
+ 521 024c 0100      		.word	1
+ 522 024e 0100      		.word	1
+ 523 0250 AB00      		.word	171
+ 524 0252 AA00      		.word	170
+ 525 0254 A900      		.word	169
+ 526 0256 AE00      		.word	174
+ 527 0258 0000 0000 		.zero	1320
+ 527      0000 0000 
+ 527      0000 0000 
+ 527      0000 0000 
+ 527      0000 0000 
+ 528 0780 3A00      		.word	58
+ 529 0782 3B00      		.word	59
+ 530 0784 3C00      		.word	60
+ 531 0786 3D00      		.word	61
+ 532 0788 3E00      		.word	62
+ 533 078a 3F00      		.word	63
+ 534 078c 4000      		.word	64
+ 535 078e 4100      		.word	65
+ 536 0790 4200      		.word	66
+ 537 0792 4300      		.word	67
+ 538 0794 4400      		.word	68
+ 539 0796 4500      		.word	69
+ 540 0798 0100      		.word	1
+ 541 079a 0070      		.word	28672
+ 542 079c 1D70      		.word	28701
+ 543 079e 1E70      		.word	28702
+ 544 07a0 0100      		.word	1
+ 545 07a2 0100      		.word	1
+ 546 07a4 0100      		.word	1
+ 547 07a6 0100      		.word	1
+ 548 07a8 0100      		.word	1
+ 549 07aa 0100      		.word	1
+ 550 07ac 0100      		.word	1
+ 551 07ae 4C00      		.word	76
+ 552 07b0 0100      		.word	1
+ 553 07b2 0100      		.word	1
+ 554 07b4 0100      		.word	1
+ 555 07b6 1570      		.word	28693
+ 556 07b8 1670      		.word	28694
+ 557 07ba 1370      		.word	28691
+ 558 07bc 0A70      		.word	28682
+ 559 07be 3D70      		.word	28733
+ 560 07c0 3E70      		.word	28734
+ 561 07c2 3F70      		.word	28735
+ 562 07c4 0100      		.word	1
+ 563 07c6 0100      		.word	1
+ 564 07c8 0100      		.word	1
+ 565 07ca 1C70      		.word	28700
+ 566 07cc 1B70      		.word	28699
+ 567 07ce 1870      		.word	28696
+ 568 07d0 1970      		.word	28697
+ 569 07d2 1D70      		.word	28701
+ 570 07d4 1E70      		.word	28702
+ 571 07d6 0100      		.word	1
+ 572 07d8 0100      		.word	1
+ 573 07da 0100      		.word	1
+ 574 07dc 0100      		.word	1
+ 575 07de 0100      		.word	1
+ 576 07e0 0100      		.word	1
+ 577 07e2 0100      		.word	1
+ 578 07e4 0100      		.word	1
+ 579 07e6 0100      		.word	1
+ 580 07e8 0100      		.word	1
+ 581 07ea 0100      		.word	1
+ 582 07ec 0100      		.word	1
+ 583 07ee 0100      		.word	1
+ 584 07f0 0100      		.word	1
+ 585 07f2 0100      		.word	1
+ 586 07f4 0100      		.word	1
+ 587 07f6 0100      		.word	1
+ 588               		.text
+ 589               	.Letext0:
+ 590               		.file 2 "/usr/local/Cellar/avr-gcc/4.9.3/avr/include/stdint.h"
+ 591               		.file 3 "../../tmk_core/common/keyboard.h"
+ 592               		.file 4 "../../tmk_core/common/keycode.h"
+ 593               		.file 5 "../../tmk_core/common/action.h"
+ 594               		.file 6 "../../quantum/keymap.h"
+ 595               		.file 7 "../../tmk_core/protocol/lufa/LUFA-git/LUFA/Drivers/USB/Core/USBTask.h"
+ 596               		.file 8 "../../tmk_core/common/eeconfig.h"
+ 597               		.file 9 "../../tmk_core/common/action_layer.h"
+ 598               		.file 10 "../../quantum/quantum.h"
+ 599               		.file 11 "../../tmk_core/common/backlight.h"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 keymap.c
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//cc2cIb1J.s:2      *ABS*:000000000000003e __SP_H__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//cc2cIb1J.s:3      *ABS*:000000000000003d __SP_L__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//cc2cIb1J.s:4      *ABS*:000000000000003f __SREG__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//cc2cIb1J.s:5      *ABS*:0000000000000000 __tmp_reg__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//cc2cIb1J.s:6      *ABS*:0000000000000001 __zero_reg__
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//cc2cIb1J.s:13     .text.persistant_default_layer_set:0000000000000000 persistant_default_layer_set
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//cc2cIb1J.s:53     .text.process_record_user:0000000000000000 process_record_user
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//cc2cIb1J.s:210    .text.matrix_init_user:0000000000000000 matrix_init_user
+/var/folders/dz/_5509m0x1cvcwp6fj8ygb2300000gn/T//cc2cIb1J.s:226    .progmem.data.keymaps:0000000000000000 keymaps
+
+UNDEFINED SYMBOLS
+eeconfig_update_default_layer
+default_layer_set
+layer_on
+update_tri_layer
+layer_off
+register_code
+backlight_step
+unregister_code
