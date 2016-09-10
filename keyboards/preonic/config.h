@@ -28,6 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define PRODUCT         The Preonic Keyboard
 #define DESCRIPTION     A compact ortholinear keyboard w/ HHKB layout(Jin)
 
+
+#define FORCE_NKRO 1
 /* key matrix size */
 #define MATRIX_ROWS 5
 #define MATRIX_COLS 12
